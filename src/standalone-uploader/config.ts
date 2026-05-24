@@ -10,7 +10,7 @@
  *       locale:     'en'          // optional, default 'en'
  *     }
  *   </script>
- *   <script type="module" src=".../dvwebloader/reusable-components/dv-uploader.js"></script>
+ *   <script type="module" src=".../reusable-components/dv-uploader.js"></script>
  *   <div id="dv-uploader"></div>
  *
  * Authentication is via the browser's JSESSIONID session cookie.
@@ -26,7 +26,7 @@ export interface DvUploaderConfig {
   locale?: string
   /**
    * URL template for translation files.
-   * Default: `{siteUrl}/dvwebloader/locales/{{lng}}/{{ns}}.json`
+   * Default: `{siteUrl}/reusable-components/locales/{{lng}}/{{ns}}.json`
    */
   localesPath?: string
   /** ID of the DOM element to mount into. Default: 'dv-uploader' */

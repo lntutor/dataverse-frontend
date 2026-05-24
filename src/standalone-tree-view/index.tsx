@@ -178,7 +178,7 @@ async function init(opts: { fromObserver?: boolean } = {}) {
   ApiConfig.init(`${config.siteUrl}/api/v1`, DataverseApiAuthMechanism.SESSION_COOKIE)
 
   const localesPath =
-    config.localesPath ?? `${config.siteUrl}/dvwebloader/locales/{{lng}}/{{ns}}.json`
+    config.localesPath ?? `${config.siteUrl}/reusable-components/locales/{{lng}}/{{ns}}.json`
 
   // Initialise i18next exactly once — repeated init() calls log
   // warnings and re-load locale resources unnecessarily. Subsequent

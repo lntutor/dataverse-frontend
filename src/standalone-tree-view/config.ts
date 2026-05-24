@@ -34,7 +34,7 @@ export interface DvTreeViewConfig {
   locale?: string
   /**
    * URL template for translation files.
-   * Default: `{siteUrl}/dvwebloader/locales/{{lng}}/{{ns}}.json`
+   * Default: `{siteUrl}/reusable-components/locales/{{lng}}/{{ns}}.json`
    */
   localesPath?: string
   /** ID of the DOM element to mount into. Default: 'dv-tree-view' */

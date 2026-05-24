@@ -98,7 +98,7 @@ export default defineConfig({
     // `dist-uploader/`) for devtools-driven debugging when wanted, but
     // do NOT add a `//# sourceMappingURL=...` comment to the deployed
     // `.js` bundles. The dataverse repo ships only the `.js` files
-    // under `webapp/dvwebloader/`, so the comment would otherwise tell
+    // under `webapp/reusable-components/`, so the comment would otherwise tell
     // every browser DevTools session to fetch a sibling `.map` that
     // isn't on disk and log a console-spamming 404. Hidden keeps the
     // map files reachable when explicitly loaded by hand.

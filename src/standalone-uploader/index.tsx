@@ -20,7 +20,7 @@ import '../../packages/design-system/dist/style.css'
 // bundle is mounted into pages whose own CSS context (e.g. JSF Bootstrap 3,
 // or an external host's stylesheet) we must not perturb. Component styles
 // are CSS-Modules with hashed class names. The standalone *demo* HTML page
-// (`dvwebloaderV2.html`) imports Bootstrap directly via a <link> tag for
+// (`dvUploader.html`) imports Bootstrap directly via a <link> tag for
 // its own page chrome.
 import 'react-toastify/dist/ReactToastify.css'
 import './standalone.scss'
@@ -155,7 +155,7 @@ async function init(opts: { fromObserver?: boolean } = {}) {
   ApiConfig.init(`${config.siteUrl}/api/v1`, DataverseApiAuthMechanism.SESSION_COOKIE)
 
   const localesPath =
-    config.localesPath ?? `${config.siteUrl}/dvwebloader/locales/{{lng}}/{{ns}}.json`
+    config.localesPath ?? `${config.siteUrl}/reusable-components/locales/{{lng}}/{{ns}}.json`
 
   if (!i18nReady) {
     i18nReady = i18next
