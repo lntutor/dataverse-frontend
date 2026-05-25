@@ -29,7 +29,6 @@ This changelog follows the principles of [Keep a Changelog](https://keepachangel
 - Tree DOM focus follows the keyboard's roving tabindex when the bundle is mounted inside a Shadow DOM (JSF embed): the focus-grab effect now resolves the active element via `el.getRootNode()` instead of `document.activeElement`, so the `:focus-visible` ring tracks Up/Down arrow keys across the host-page boundary.
 - Tree view now re-mounts cleanly when a JSF partial update re-inserts the host `<div>`. Both standalone bundles install a `MutationObserver` that detects host-element identity changes and re-runs `init()` (the orphaned-Root regression that left the tree empty after toggling Table↔Tree several times).
 - `useFileTree` no longer leaves the loading spinner forever when the host component unmounts mid-fetch; a `mountedRef` guard skips state updates after unmount, and the version-key-change reset path bypasses the stale-closure cache short-circuit so a refetch fires on schedule.
-- `useCheckPublishCompleted` polling no longer races itself: a `cancelled` latch + `inFlight` guard prevents a second `getDatasetLocks` call from firing while the first is still awaiting, fixing the rare double-success case and stopping extra requests after a poll-loop error.
 - Tree-view header now exposes a tristate select-all checkbox in its dedicated select column.
 - Streaming-zip download tray's close button is sized for normal-pointer hit-targets when the bundle renders inside a JSF page (was rendering as a tiny `link` button due to host-page font cascade).
 
