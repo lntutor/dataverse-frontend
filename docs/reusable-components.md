@@ -2,7 +2,7 @@
 
 How to build, ship, and consume Dataverse frontend components that work in **both** the React SPA and the legacy JSF UI.
 
-This document is the **frontend** half of the contract. The matching backend half — JSF feature flags, JSF mount points, nginx hosting — lives in [`dataverse/doc/Architecture/reusable_frontend_components.md`](https://github.com/IQSS/dataverse/blob/develop/doc/Architecture/reusable_frontend_components.md). Read both before changing the contract.
+This document is the **frontend** half of the contract. The matching backend half — JSF feature flags, JSF mount points, and operator setup — is documented in the Dataverse operator guide: [Reusable Frontend Components](https://guides.dataverse.org/en/latest/container/running/reusable-components.html). Read both before changing the contract.
 
 - [Why dual-mode](#why-dual-mode)
 - [The contract](#the-contract)
