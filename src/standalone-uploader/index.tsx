@@ -3,7 +3,6 @@ import { StrictMode } from 'react'
 import i18next from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import I18NextHttpBackend from 'i18next-http-backend'
-import { ApiConfig, DataverseApiAuthMechanism } from '@iqss/dataverse-client-javascript'
 import { ToastContainer } from 'react-toastify'
 import { StandaloneFileUploaderPanel } from './StandaloneFileUploaderPanel'
 import { StandaloneFileRepository } from './StandaloneFileRepository'
@@ -14,6 +13,7 @@ import { LoadingConfigSpinner } from '@/sections/shared/file-uploader/loading-co
 import { useGetFixityAlgorithm } from '@/sections/shared/file-uploader/useGetFixityAlgorithm'
 import { FixityAlgorithm } from '@/files/domain/models/FixityAlgorithm'
 import { mountInShadowRoot } from '../standalone-shared/shadow-mount'
+import { configureSdkAuth } from '../standalone-shared/auth'
 
 import '../../packages/design-system/dist/style.css'
 // Bootstrap 5 base CSS is intentionally NOT imported here. The standalone
@@ -152,7 +152,10 @@ async function init(opts: { fromObserver?: boolean } = {}) {
     return
   }
 
-  ApiConfig.init(`${config.siteUrl}/api/v1`, DataverseApiAuthMechanism.SESSION_COOKIE)
+  configureSdkAuth(config.siteUrl, {
+    bearerToken: config.bearerToken,
+    getBearerToken: config.getBearerToken
+  })
 
   const localesPath =
     config.localesPath ?? `${config.siteUrl}/reusable-components/locales/{{lng}}/{{ns}}.json`

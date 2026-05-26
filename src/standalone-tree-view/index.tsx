@@ -3,13 +3,13 @@ import { StrictMode } from 'react'
 import i18next from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import I18NextHttpBackend from 'i18next-http-backend'
-import { ApiConfig, DataverseApiAuthMechanism } from '@iqss/dataverse-client-javascript'
 import { ToastContainer } from 'react-toastify'
 import { FilesTree } from '@/sections/dataset/dataset-files/files-tree/FilesTree'
 import { FileTreeJSDataverseRepository } from '@/files/infrastructure/repositories/FileTreeJSDataverseRepository'
 import { DatasetVersion, DatasetVersionNumber } from '@/dataset/domain/models/Dataset'
 import { FileTreeFile } from '@/files/domain/models/FileTreeItem'
 import { mountInShadowRoot } from '../standalone-shared/shadow-mount'
+import { configureSdkAuth } from '../standalone-shared/auth'
 
 import '../../packages/design-system/dist/style.css'
 // Bootstrap 5 base CSS is intentionally NOT imported here. The standalone
@@ -175,7 +175,10 @@ async function init(opts: { fromObserver?: boolean } = {}) {
     return
   }
 
-  ApiConfig.init(`${config.siteUrl}/api/v1`, DataverseApiAuthMechanism.SESSION_COOKIE)
+  configureSdkAuth(config.siteUrl, {
+    bearerToken: config.bearerToken,
+    getBearerToken: config.getBearerToken
+  })
 
   const localesPath =
     config.localesPath ?? `${config.siteUrl}/reusable-components/locales/{{lng}}/{{ns}}.json`

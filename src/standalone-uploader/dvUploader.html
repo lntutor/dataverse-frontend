@@ -5,14 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dataverse Uploader — Standalone Demo</title>
     <!--
-      Direct-embed usage in JSF (or any HTML page):
+      Direct-embed usage in any HTML page:
 
         <div id="dv-uploader"></div>
         <script>
           window.dvUploaderConfig = {
-            siteUrl:    'https://your-dataverse.edu',
-            datasetPid: 'doi:10.5072/FK2/XXXXX',
-            locale:     'en'
+            siteUrl:     'https://your-dataverse.edu',
+            datasetPid:  'doi:10.5072/FK2/XXXXX',
+            bearerToken: '...',   // optional — pass when the host
+                                  // can produce a token (any non-JSF
+                                  // host, cross-origin embed, …)
+            locale:      'en'
           }
         </script>
         <script type="module" src=".../reusable-components/dv-uploader.js"></script>
@@ -22,16 +25,22 @@
       page styles loaded here (`standalone-page.css`) are for this demo only
       and are NOT part of the embedded bundle.
 
-      Authentication uses the browser JSESSIONID session cookie.
-      DATAVERSE_FEATURE_API_SESSION_AUTH must be enabled.
+      Authentication:
+        * Pass `bearerToken` (or `getBearerToken`) and the bundle uses
+          `Authorization: Bearer <token>` on every request.
+        * Omit both and the bundle falls back to the browser's
+          JSESSIONID session cookie. That works for same-origin JSF
+          embeddings; `DATAVERSE_FEATURE_API_SESSION_AUTH` must be on.
     -->
     <link rel="stylesheet" href="standalone-page.css" />
     <script>
+      const params = new URLSearchParams(window.location.search)
+      const bearerToken = params.get('bearerToken') || undefined
       window.dvUploaderConfig = {
-        siteUrl:
-          new URLSearchParams(window.location.search).get('siteUrl') || 'http://localhost:8080',
-        datasetPid: new URLSearchParams(window.location.search).get('datasetPid') || '',
-        locale: new URLSearchParams(window.location.search).get('dvLocale') || 'en'
+        siteUrl: params.get('siteUrl') || 'http://localhost:8080',
+        datasetPid: params.get('datasetPid') || '',
+        locale: params.get('dvLocale') || 'en',
+        ...(bearerToken !== undefined && { bearerToken })
       }
     </script>
     <script type="module" src="reusable-components/dv-uploader.js"></script>

@@ -38,10 +38,10 @@ Every reusable component **MUST**:
    - Reads its config from a typed window global, e.g. `window.dvUploaderConfig`.
    - Mounts a React tree on a DOM node with a configurable id (default e.g. `dv-uploader`).
    - Renders an inline error if the config is missing or invalid — JSF callers cannot see thrown exceptions.
-2. Have a **typed config interface** (`config.ts`) with `siteUrl` (mandatory) and a small set of explicit fields. No URL params; no API tokens. Optional fields go after required ones.
+2. Have a **typed config interface** (`config.ts`) with `siteUrl` (mandatory) and a small set of explicit fields. Optional fields go after required ones.
 3. Have a **shared core React component** under `src/sections/shared/<component>/<Component>Core.tsx` that the SPA and the standalone wrapper both render. The core takes **props**, not config.
 4. Provide a **dedicated repository adapter** (`Standalone<Component>Repository.ts`) when the SPA repository is not directly usable, so the standalone path stays loosely coupled to SPA-specific contexts.
-5. Authenticate via **session cookie (JSESSIONID)** only. See [Authentication](#authentication).
+5. Accept **either a bearer token (in any host) or a JSESSIONID session cookie (same-origin JSF shortcut)** — the host picks. See [Authentication](#authentication).
 6. Inject its CSS via [`vite-plugin-css-injected-by-js`](https://www.npmjs.com/package/vite-plugin-css-injected-by-js) so the artifact is a single JS file. See [CSS isolation](#css-isolation).
 7. Expose a **stable mount config** that doesn't depend on internal route state, design tokens, or the SPA's redux/context graph. The config is the public API surface; treat it like one.
 
@@ -49,7 +49,7 @@ The host page, in turn, **MUST**:
 
 1. Set `window.<componentConfig>` synchronously **before** loading the bundle.
 2. Provide the mount target `<div id="...">`.
-3. Set `dataverse.siteUrl` (server-side) to the URL the browser actually uses, so Origin/Referer matches and session-cookie auth works.
+3. Either pass a `bearerToken` / `getBearerToken` in the config (recommended for any host you control end-to-end, mandatory for cross-origin embeds) **or** set `dataverse.siteUrl` (server-side) to the URL the browser actually uses, so Origin/Referer matches and session-cookie auth works (same-origin JSF shortcut).
 
 ## Build pipeline
 
@@ -86,23 +86,72 @@ npm run build-reusable-components
 
 ## Authentication
 
-**Session cookie only.** API key in URL is not accepted. Bearer auth is for SPA developer flows; reusable components in JSF land authenticate via the user's existing session.
+The bundle ships **two contracts**, and the host picks one per mount. Both go through `@iqss/dataverse-client-javascript` — the bundle never builds its own headers.
 
-Prerequisites on the Dataverse instance:
+### Bearer token (works in any host page)
 
-- `DATAVERSE_FEATURE_API_SESSION_AUTH=1` (`dataverse.feature.api-session-auth`). **Required and enforced today.**
-- `DATAVERSE_FEATURE_API_SESSION_AUTH_HARDENING=1` (`dataverse.feature.api-session-auth-hardening`). **Recommended for production.** Adds Origin/Referer + `X-Dataverse-CSRF-Token` enforcement on every session-cookie API request. The bundle's HTTP client bootstraps the CSRF token from `GET /api/users/:csrf-token` and attaches the header automatically — no extra wiring needed beyond a correct `siteUrl`. Delivered by [`IQSS/dataverse#12188`](https://github.com/IQSS/dataverse/pull/12188).
-- `dataverse.siteUrl=<browser-facing URL>`. Required regardless. Used for Origin/Referer validation when hardening is on.
+The general path. The host provides a token in the config; the SDK attaches `Authorization: Bearer <token>` to every API request. Works regardless of origin (no cookies in flight), works on any HTML page, works in a third-party SaaS embed, works in the standalone demo. **How the host obtains the token is out of scope** — could be the host's own OIDC flow, an opaque token vended by a session-exchange endpoint, a CI-issued service token, anything. The bundle stays oblivious.
 
-In each component's `index.tsx`:
+Two shapes:
 
 ```ts
-import { ApiConfig } from '@iqss/dataverse-client-javascript'
-
-ApiConfig.init(`${config.siteUrl}/api/v1`, DataverseApiAuthMechanism.SESSION_COOKIE)
+// Static — the host already has a token at mount time and it doesn't refresh.
+window.dvUploaderConfig = {
+  siteUrl: 'https://your-dataverse.edu',
+  datasetPid: 'doi:10.5072/FK2/XXXXX',
+  bearerToken: '<jwt>'
+}
 ```
 
-Don't accept `apiKey` or `apiToken` as a config field. If you find yourself wanting to, the host is mis-configured — fix the host instead.
+```ts
+// Per-request getter — the host wants to rotate the token without
+// remounting (e.g. silent refresh from an OIDC library). Consulted on
+// every API call. Return null/undefined to fall through to the static
+// bearerToken, or to session-cookie if neither is set.
+window.dvUploaderConfig = {
+  siteUrl: 'https://your-dataverse.edu',
+  datasetPid: 'doi:10.5072/FK2/XXXXX',
+  getBearerToken: () => oidcClient.getAccessTokenIfValid()
+}
+```
+
+If both `bearerToken` and `getBearerToken` are set, the function wins.
+
+### Session cookie (same-origin JSF shortcut)
+
+Omit `bearerToken` _and_ `getBearerToken`, and the bundle falls back to sending the browser's JSESSIONID via `withCredentials: true`. This is the zero-config path for JSF pages on the same origin: the user is already logged into JSF, the cookie already exists, the SDK just attaches it. Picks up CSRF hardening automatically (`GET /api/users/:csrf-token` on bootstrap, `X-Dataverse-CSRF-Token` on every write).
+
+Prerequisites on the Dataverse instance when you use this path:
+
+- `DATAVERSE_FEATURE_API_SESSION_AUTH=1` (`dataverse.feature.api-session-auth`). Required and enforced.
+- `DATAVERSE_FEATURE_API_SESSION_AUTH_HARDENING=1` (`dataverse.feature.api-session-auth-hardening`). Recommended for production. Adds Origin/Referer + `X-Dataverse-CSRF-Token` enforcement on every session-cookie API request. Delivered by [`IQSS/dataverse#12188`](https://github.com/IQSS/dataverse/pull/12188).
+- `dataverse.siteUrl=<browser-facing URL>`. Used for Origin/Referer validation when hardening is on.
+
+Cookies don't travel cross-origin, so this path only works when the bundle is loaded by a page on the **same origin** as `siteUrl`. Cross-origin / non-JSF / third-party hosts MUST use the bearer path.
+
+### Picking one
+
+| Where is the bundle mounted?                     | Use                                                                  |
+| ------------------------------------------------ | -------------------------------------------------------------------- |
+| JSF page, same origin as Dataverse API           | Session cookie (or bearer if you have one — either works)            |
+| SPA on the same Dataverse install                | Bearer (the SPA already has a token from its OIDC login)             |
+| Third-party HTML page, your own org              | Bearer (whatever your auth flow produces)                            |
+| Third-party HTML page, partner integration       | Bearer (your contract with the partner says how the token is issued) |
+| Cross-origin embed (different host than the API) | Bearer (cookies don't cross origins)                                 |
+| Standalone demo / local testing                  | Bearer (pass `?bearerToken=…` in the URL)                            |
+
+The wiring in each component's `index.tsx` is one helper call:
+
+```ts
+import { configureSdkAuth } from '../standalone-shared/auth'
+
+configureSdkAuth(config.siteUrl, {
+  bearerToken: config.bearerToken,
+  getBearerToken: config.getBearerToken
+})
+```
+
+`configureSdkAuth` picks BEARER_TOKEN if either field is set, SESSION_COOKIE otherwise. New components inherit the contract by using the same helper — don't reimplement.
 
 ## CSS isolation
 
