@@ -26,7 +26,7 @@
     "tests",
     "cypress.config.ts",
     "vite.config.ts",
-    "vite.config.uploader.ts",
+    "vite.config.reusable-components.ts",
     "packages/design-system/src/",
     "public"
   ],

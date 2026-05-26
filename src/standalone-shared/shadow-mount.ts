@@ -74,7 +74,7 @@ export function mountInShadowRoot({ rootElementId }: MountInShadowRootArgs): Sha
 
   // Drain queued CSS chunks. The queue is populated by
   // `vite-plugin-css-injected-by-js`'s overridden `injectCode` (see
-  // `vite.config.uploader.ts`). The same queue is shared across multiple
+  // `vite.config.reusable-components.ts`). The same queue is shared across multiple
   // bundles loaded on the same page; that's fine — appending the same
   // CSS into multiple shadow roots is correct, each shadow scope needs
   // its own copy.

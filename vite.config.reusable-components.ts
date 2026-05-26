@@ -44,7 +44,7 @@ export default defineConfig({
     include: ['@iqss/dataverse-client-javascript']
   },
   build: {
-    outDir: 'dist-uploader',
+    outDir: 'dist-reusable-components',
     emptyOutDir: true,
     // Target modern browsers for smaller bundle size
     target: 'es2020',
@@ -95,7 +95,7 @@ export default defineConfig({
     // Enable minification
     minify: 'esbuild',
     // 'hidden' instead of true: emit `.js.map` files locally (in
-    // `dist-uploader/`) for devtools-driven debugging when wanted, but
+    // `dist-reusable-components/`) for devtools-driven debugging when wanted, but
     // do NOT add a `//# sourceMappingURL=...` comment to the deployed
     // `.js` bundles. The dataverse repo ships only the `.js` files
     // under `webapp/reusable-components/`, so the comment would otherwise tell

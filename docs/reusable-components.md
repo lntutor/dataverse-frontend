@@ -53,10 +53,10 @@ The host page, in turn, **MUST**:
 
 ## Build pipeline
 
-Reusable components are built by `vite.config.uploader.ts` (poorly named — it builds _all_ reusable components, not just the uploader). The output goes to `dist-uploader/reusable-components/`:
+Reusable components are built by `vite.config.reusable-components.ts`. The output goes to `dist-reusable-components/reusable-components/` — the inner `reusable-components/` mirrors the JSF deploy path (`webapp/reusable-components/`) so the copy step is a straight tree copy:
 
 ```
-dist-uploader/
+dist-reusable-components/
 └── reusable-components/
     ├── dv-uploader.js                   # entry per component
     ├── chunks/
@@ -67,7 +67,7 @@ dist-uploader/
     └── assets/                          # fonts/images if any
 ```
 
-The four shared chunks (`react`, `i18n`, `vendor`, `dataverse-shared`) are produced by the `manualChunks` rule in `vite.config.uploader.ts`. When you add a second component, both bundles share these chunks; the host page loads each shared chunk **once** even if it embeds multiple components.
+The four shared chunks (`react`, `i18n`, `vendor`, `dataverse-shared`) are produced by the `manualChunks` rule in `vite.config.reusable-components.ts`. When you add a second component, both bundles share these chunks; the host page loads each shared chunk **once** even if it embeds multiple components.
 
 To add a new component to the build, add another entry under `rollupOptions.input`:
 
@@ -81,10 +81,8 @@ input: {
 Build with:
 
 ```bash
-npm run build-uploader
+npm run build-reusable-components
 ```
-
-(Yes, also poorly named — it builds the whole reusable-components folder.)
 
 ## Authentication
 
@@ -123,7 +121,7 @@ createRoot(reactRoot).render(/* … your React tree … */)
 - The exception: anything that reaches outside the React tree via a portal. `react-toastify`'s `<ToastContainer>` renders inline in the React tree, so it stays inside the shadow root automatically. Anything that defaults to `document.body` (modal libraries, `react-bootstrap` `<Overlay>` / `<Tooltip>` / `<Popover>`, popperjs containers) **must** be passed an explicit container that lives inside the shadow root. The shadow root is exposed as `window.__dvShadowRoot[rootElementId]` for that purpose; importing it from `shadow-mount.ts` is preferred.
 - The momentary `document.body.appendChild(<a>)` anchor-click trick used for browser-triggered downloads is unaffected — it's browser-level navigation, not styling.
 
-**How the CSS reaches the shadow root.** `vite-plugin-css-injected-by-js` is configured with a custom `injectCode` (see `vite.config.uploader.ts`) that pushes every CSS chunk onto `window.__dvPendingStyles` instead of appending it to `<head>`. The shadow-mount helper drains that queue, creating one `<style>` element inside the shadow root per chunk. Each entry bundle carries the full CSS for self-sufficient mounting (controlled by `jsAssetsFilterFunction`); on a page that loads only `dv-uploader.js` the CSS is still adopted, on a page that loads only `dv-tree-view.js` the same.
+**How the CSS reaches the shadow root.** `vite-plugin-css-injected-by-js` is configured with a custom `injectCode` (see `vite.config.reusable-components.ts`) that pushes every CSS chunk onto `window.__dvPendingStyles` instead of appending it to `<head>`. The shadow-mount helper drains that queue, creating one `<style>` element inside the shadow root per chunk. Each entry bundle carries the full CSS for self-sufficient mounting (controlled by `jsAssetsFilterFunction`); on a page that loads only `dv-uploader.js` the CSS is still adopted, on a page that loads only `dv-tree-view.js` the same.
 
 **Cookbook for adding a new reusable component:**
 
@@ -188,7 +186,7 @@ Greenfield component (no existing SPA section to reuse):
 2. **Build the SPA section first.** Put the React tree under `src/sections/<area>/<feature>/`. Use the standard DDD layout (`src/<area>/domain/...`, `src/<area>/infrastructure/...`). It must run in the SPA before the JSF mount path is touched.
 3. **Extract a `Core` component.** Pull the props-driven inner React tree out into `<Component>Core.tsx`. The SPA section keeps its routing/context glue; the core takes pure props.
 4. **Add a standalone wrapper.** Create `src/standalone-<component>/index.tsx`, `config.ts`, `Standalone<Component>Repository.ts` (if needed). Wrap the core in a thin component that reads `window.<componentConfig>`, sets up `ApiConfig`, mounts on the configured div.
-5. **Add a vite entry.** Append to `rollupOptions.input` in `vite.config.uploader.ts`.
+5. **Add a vite entry.** Append to `rollupOptions.input` in `vite.config.reusable-components.ts`.
 6. **Add a demo HTML.** `src/standalone-<component>/<componentName>.html` with a one-page demo, including a snippet showing JSF integration.
 7. **Document.** Update [Currently shipped components](#currently-shipped-components) and add a brief contract description.
 
@@ -241,7 +239,7 @@ Feature flag (server-side): `dataverse.feature.react-uploader`.
 
 ### Tree view (`#6691`)
 
-Built on the same pattern. The SPA section lives at `src/sections/dataset/dataset-files/files-tree/`; the standalone wrapper is in `src/standalone-tree-view/` and is the second entry point in `vite.config.uploader.ts` (`dv-tree-view`). The bundle config interface is `window.dvTreeViewConfig` (see [`src/standalone-tree-view/config.ts`](../src/standalone-tree-view/config.ts)).
+Built on the same pattern. The SPA section lives at `src/sections/dataset/dataset-files/files-tree/`; the standalone wrapper is in `src/standalone-tree-view/` and is the second entry point in `vite.config.reusable-components.ts` (`dv-tree-view`). The bundle config interface is `window.dvTreeViewConfig` (see [`src/standalone-tree-view/config.ts`](../src/standalone-tree-view/config.ts)).
 
 Feature flag (server-side): `dataverse.feature.react-tree-view`.
 
