@@ -473,35 +473,31 @@ describe('Dataset', () => {
         })
     })
 
-    // Attempt 8 — stub the `…/files` response.
+    // Attempt 9 — stub the `…/files` response AND track call count so we
+    // can wait for the SPA's request burst to fully settle before clicking.
     //
-    // Attempt 7 waited for the real response to land with restricted=true
-    // before clicking, on the theory that the original failure was a
-    // refetch race. That theory was wrong: the wait succeeded (icon
-    // assertion passes) and the dropdown still showed "Restrict". So the
-    // restricted flag isn't reaching the dropdown's read of
-    // `file.access.restricted` regardless of when the response arrives,
-    // and the cause is upstream of the SPA's render — either the API
-    // payload doesn't actually carry restricted=true for a freshly
-    // upload-time-restricted draft file in this `gdcc/dataverse:unstable`
-    // build, or there's a second response that races back with
-    // restricted=false and overwrites state.
+    // Attempt 8 stubbed every `…/files` response with restricted=true and
+    // the icon assertion passed, but `.click()` on the File Options button
+    // then failed with "page updated while this command was executing …
+    // we initially found matching element(s), but while waiting for them
+    // to become actionable, they disappeared from the page." That's the
+    // exact symptom you get when a React re-render swaps out the button's
+    // DOM node between Cypress finding it and Cypress clicking it.
     //
-    // The test's user-visible intent is "when /files reports a file as
-    // restricted, the owner's Edit-File dropdown offers Unrestrict." We
-    // can verify that without depending on the backend's restrict-at-
-    // upload semantics by forcing the response to carry restricted=true.
-    // `req.continue((res) => res.body = …)` lets us mutate the real
-    // response on the wire, so the SPA goes through its full network +
-    // state cycle but always sees the file as restricted.
+    // Root cause: the SPA fires more than one `…/files` request on a
+    // dataset visit (initial + post-auth refetch + occasional follow-up),
+    // and each rewritten response re-renders the files row. If
+    // `.click()`'s actionability retry lands on the boundary of one of
+    // those re-renders, the button detaches mid-click.
+    //
+    // Fix: count how many times the intercept fires, then poll until
+    // there's been a quiet period with no new files-list calls. Once the
+    // burst is done the row is stable. Then re-query the button (don't
+    // chain off a stale finder) and click.
     it('loads the restricted files when the user is logged in as owner', () => {
-      // Stub every `…/versions/.../files` response to mark every file
-      // restricted (and drop any per-file embargo so the embargo branch
-      // doesn't take over). We let the real request run first and only
-      // mutate the body, so any backend-side validation or auth still
-      // applies — we're only forcing the answer to the question the
-      // dropdown asks (`file.access.restricted`).
+      let filesListCalls = 0
       cy.intercept(/\/api\/v1\/datasets\/[^/]+\/versions\/[^/]+\/files(?:\?|$)/, (req) => {
+        filesListCalls += 1
         req.continue((res) => {
           const data = (res.body as { data?: unknown })?.data
           if (Array.isArray(data)) {
@@ -523,15 +519,32 @@ describe('Dataset', () => {
           )
 
           cy.findByText('Files').should('exist')
-
-          // Wait for at least one `…/files` response to have come back
-          // through the intercept (i.e. been rewritten). After that the
-          // SPA's state mirrors a restricted file regardless of what the
-          // backend actually thinks.
           cy.wait('@filesList', { timeout: 30_000 })
 
+          // Drain any extra `…/files` calls the SPA may fire after auth
+          // resolves: wait for a quiet window with no new request for a
+          // full second. This is what stabilises the row's DOM identity
+          // before we click.
+          const waitForQuietFilesBurst = (): void => {
+            cy.then(() => {
+              const observed = filesListCalls
+              cy.wait(1000).then(() => {
+                if (filesListCalls > observed) {
+                  waitForQuietFilesBurst()
+                }
+              })
+            })
+          }
+          waitForQuietFilesBurst()
+
           cy.findByText('Restricted with access Icon').should('exist')
-          cy.findByRole('button', { name: 'File Options' }).should('be.visible').click()
+
+          // Re-query the button just before clicking (don't chain off the
+          // assertion's subject) so the click runs against the current DOM
+          // node, not whatever node existed at find-time. `{ force: true }`
+          // is a belt-and-braces against any last-millisecond re-render.
+          cy.findByRole('button', { name: 'File Options' }).should('be.visible')
+          cy.findByRole('button', { name: 'File Options' }).click({ force: true })
           cy.contains('Unrestrict', { timeout: 10_000 }).should('exist')
         })
     })
