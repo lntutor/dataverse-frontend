@@ -473,33 +473,70 @@ describe('Dataset', () => {
         })
     })
 
-    // Hypothesis check (attempt 6): this test was repeatedly failing
-    // with `bodyHasFileOptions: false` and `bodyHasLoading: true` at
-    // click time. Five prior fixes targeted timing — none de-flaked.
-    // Observation: the failure always landed on the first
-    // "logged in as owner" test that ran AFTER a test that called
-    // `TestsUtils.logout()`. Even though `beforeEach` calls
-    // `TestsUtils.login()` again, Keycloak's residual session state
-    // or a stale OIDC token in localStorage could leave the SPA
-    // partially authenticated — enough to load the dataset shell
-    // but not enough for the file table's owner-only refetch to
-    // succeed cleanly.
+    // Attempt 7 — `cy.intercept` rewrite the author flagged in the
+    // attempt-6 comment block.
     //
-    // Mitigation under test: moved this case BEFORE the first
-    // logout-triggering test in this describe block, so it runs
-    // while the auth state is freshest. If this passes in CI, the
-    // session-pollution hypothesis is confirmed and we can either
-    // keep the order or add an explicit cookie/localStorage reset
-    // between tests. If it fails again, `it.skip` it back and
-    // pursue the `cy.intercept` rewrite post-DCM.
+    // The recurring symptom: `cy.contains('Unrestrict')` times out
+    // after the menu opens even though the row's
+    // "Restricted with access Icon" was found two lines earlier on the
+    // same FilePreview. Five prior fixes targeted wall-clock timing
+    // and none de-flaked it. The diagnosis the author left behind was
+    // a divergence between the row's read of `file.access.restricted`
+    // and the dropdown's read — most likely a refetch race in the SPA
+    // where the owner-only files fetch resolves *after* the row first
+    // renders, and the dropdown is opened against the stale FilePreview
+    // before that refetch lands.
+    //
+    // This rewrite waits on the actual files-listing XHR response
+    // before interacting with the dropdown, so the assertion is
+    // deterministic against the server-confirmed state rather than
+    // racing the SPA's refetch. The intercept matches the SDK's call
+    // shape (`/api/v1/datasets/:persistentId/versions/:DRAFT/files…`),
+    // and the wait succeeds only after a response body that contains a
+    // file marked `restricted: true` has actually been observed.
     it('loads the restricted files when the user is logged in as owner', () => {
+      // Match only the dataset-version files-listing endpoint (so we don't
+      // accidentally also capture `/files/counts`, `/files/<id>/...` etc.).
+      // The SDK injects the literal `:persistentId` placeholder into the
+      // path and appends the real PID as a `?persistentId=…` query arg
+      // (see ApiRepository.buildApiEndpoint).
+      cy.intercept(/\/api\/v1\/datasets\/[^/]+\/versions\/[^/]+\/files(?:\?|$)/).as('filesList')
+
       cy.wrap(DatasetHelper.createWithFiles(FileHelper.createManyRestricted(1)))
         .its('persistentId')
         .then((persistentId: string) => {
           cy.visit(
             `${FRONTEND_BASE_PATH}/datasets?persistentId=${persistentId}&version=${DRAFT_PARAM}`
           )
+
           cy.findByText('Files').should('exist')
+
+          // Wait for a `…/files` response whose body actually contains a
+          // file marked `restricted: true`. The SPA can issue multiple
+          // requests in sequence (initial + post-auth refetch); the loop
+          // drains them until a matching one lands. Bounded so a
+          // genuinely missing flag fails the test fast instead of hanging.
+          const MAX_FILE_LIST_RESPONSES = 5
+          const waitForRestrictedResponse = (remaining: number): void => {
+            cy.wait('@filesList', { timeout: 30_000 }).then((interception) => {
+              const body = interception.response?.body as { data?: unknown } | undefined
+              const items = Array.isArray(body?.data)
+                ? (body.data as Array<{ restricted?: boolean }>)
+                : []
+              const hasRestricted = items.some((f) => f?.restricted === true)
+              if (hasRestricted) return
+              if (remaining <= 1) {
+                throw new Error(
+                  'No /files response carried restricted=true within the bounded wait'
+                )
+              }
+              waitForRestrictedResponse(remaining - 1)
+            })
+          }
+          waitForRestrictedResponse(MAX_FILE_LIST_RESPONSES)
+
+          // Server-confirmed: the file is restricted. Now the dropdown's
+          // read of `file.access.restricted` will agree with the icon.
           cy.findByText('Restricted with access Icon').should('exist')
           cy.findByRole('button', { name: 'File Options' }).should('be.visible').click()
           cy.contains('Unrestrict', { timeout: 10_000 }).should('exist')
