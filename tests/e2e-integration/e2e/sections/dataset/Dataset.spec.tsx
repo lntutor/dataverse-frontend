@@ -473,31 +473,19 @@ describe('Dataset', () => {
         })
     })
 
-    // Attempt 9 — stub the `…/files` response AND track call count so we
-    // can wait for the SPA's request burst to fully settle before clicking.
-    //
-    // Attempt 8 stubbed every `…/files` response with restricted=true and
-    // the icon assertion passed, but `.click()` on the File Options button
-    // then failed with "page updated while this command was executing …
-    // we initially found matching element(s), but while waiting for them
-    // to become actionable, they disappeared from the page." That's the
-    // exact symptom you get when a React re-render swaps out the button's
-    // DOM node between Cypress finding it and Cypress clicking it.
-    //
-    // Root cause: the SPA fires more than one `…/files` request on a
-    // dataset visit (initial + post-auth refetch + occasional follow-up),
-    // and each rewritten response re-renders the files row. If
-    // `.click()`'s actionability retry lands on the boundary of one of
-    // those re-renders, the button detaches mid-click.
-    //
-    // Fix: count how many times the intercept fires, then poll until
-    // there's been a quiet period with no new files-list calls. Once the
-    // burst is done the row is stable. Then re-query the button (don't
-    // chain off a stale finder) and click.
+    // Attempt 10 — keep the response stub (proven to land the page in a
+    // restricted-files state, icon assertion passed in attempt 8) and
+    // simply sleep for several seconds after the icon shows so any
+    // post-render side effects fully settle before we click File Options.
+    // Attempt 8's CI failure was "page updated while this command was
+    // executing… the button disappeared from the page": something on the
+    // page re-renders the file row in the window between Cypress finding
+    // the button and dispatching the click. A plain wait between the
+    // icon assertion and the click is the cheapest way to give that
+    // settle window. Re-query the button right before clicking so
+    // Cypress doesn't carry a stale reference across the sleep.
     it('loads the restricted files when the user is logged in as owner', () => {
-      let filesListCalls = 0
       cy.intercept(/\/api\/v1\/datasets\/[^/]+\/versions\/[^/]+\/files(?:\?|$)/, (req) => {
-        filesListCalls += 1
         req.continue((res) => {
           const data = (res.body as { data?: unknown })?.data
           if (Array.isArray(data)) {
@@ -521,30 +509,12 @@ describe('Dataset', () => {
           cy.findByText('Files').should('exist')
           cy.wait('@filesList', { timeout: 30_000 })
 
-          // Drain any extra `…/files` calls the SPA may fire after auth
-          // resolves: wait for a quiet window with no new request for a
-          // full second. This is what stabilises the row's DOM identity
-          // before we click.
-          const waitForQuietFilesBurst = (): void => {
-            cy.then(() => {
-              const observed = filesListCalls
-              cy.wait(1000).then(() => {
-                if (filesListCalls > observed) {
-                  waitForQuietFilesBurst()
-                }
-              })
-            })
-          }
-          waitForQuietFilesBurst()
-
           cy.findByText('Restricted with access Icon').should('exist')
 
-          // Re-query the button just before clicking (don't chain off the
-          // assertion's subject) so the click runs against the current DOM
-          // node, not whatever node existed at find-time. `{ force: true }`
-          // is a belt-and-braces against any last-millisecond re-render.
-          cy.findByRole('button', { name: 'File Options' }).should('be.visible')
-          cy.findByRole('button', { name: 'File Options' }).click({ force: true })
+          // Give the row time to fully settle before clicking.
+          cy.wait(5_000)
+
+          cy.findByRole('button', { name: 'File Options' }).click()
           cy.contains('Unrestrict', { timeout: 10_000 }).should('exist')
         })
     })
