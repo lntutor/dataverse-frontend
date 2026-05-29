@@ -122,8 +122,13 @@ export function useSubmitCollection(
         newOrUpdatedCollection,
         collectionIdOrParentCollectionId
       )
-        .then((newCollectionIdentifier) => setSelectedStorageDriver(newCollectionIdentifier))
-        .then(() => {
+        .then(async (newCollectionIdentifier) => {
+          try {
+            await setSelectedStorageDriver(newCollectionIdentifier)
+          } catch {
+            toast.error(t('storageDriverUpdateFailed'))
+          }
+
           setSubmitError(null)
           setSubmissionStatus(SubmissionStatus.SubmitComplete)
           needsUpdateStore.setNeedsUpdate(true)

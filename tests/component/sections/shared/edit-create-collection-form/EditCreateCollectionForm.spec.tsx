@@ -364,6 +364,40 @@ describe('EditCreateCollectionForm', () => {
       cy.get('@setStorageDriver').should('have.been.calledWith', 1, 'swift')
     })
 
+    it('does not fail collection creation when setting the selected storage driver fails', () => {
+      cy.spy(needsUpdateStore, 'setNeedsUpdate').as('setNeedsUpdate')
+      collectionRepository.setStorageDriver = cy
+        .stub()
+        .as('setStorageDriver')
+        .rejects(new Error('Error setting storage driver'))
+
+      cy.mountAuthenticated(
+        <EditCreateCollectionForm
+          mode="create"
+          user={testSuperUser}
+          parentCollection={rootCollection}
+          collectionRepository={collectionRepository}
+          metadataBlockInfoRepository={metadataBlockInfoRepository}
+        />,
+        undefined,
+        { superuser: true }
+      )
+
+      cy.findByRole('button', { name: 'Apply suggestion' }).click()
+      cy.findByLabelText(/^Category/i).select(1)
+      cy.findByLabelText(/^Storage/i).select('swift')
+
+      cy.findByRole('button', { name: 'Create Collection' }).click()
+
+      cy.get('@setStorageDriver').should('have.been.calledWith', 1, 'swift')
+      cy.findByText('Error').should('not.exist')
+      cy.findByText('Success!').should('exist')
+      cy.findByText(
+        'The collection was created, but the storage driver could not be updated.'
+      ).should('exist')
+      cy.get('@setNeedsUpdate').should('have.been.calledWith', true)
+    })
+
     it('submits a valid form and fails', () => {
       collectionRepository.create = cy.stub().rejects(new Error('Error creating collection'))
 
