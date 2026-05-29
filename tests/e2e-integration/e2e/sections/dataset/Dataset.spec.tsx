@@ -511,10 +511,28 @@ describe('Dataset', () => {
 
           cy.findByText('Restricted with access Icon').should('exist')
 
-          // Give the row time to fully settle before clicking.
-          cy.wait(5_000)
+          // The File Options control is a react-bootstrap dropdown whose
+          // menu only mounts while open. On slow CI a single click races
+          // a background re-render — the toggle no-ops, or the just-opened
+          // menu re-closes — which is why earlier fixed waits and
+          // force-clicks stayed flaky. Re-open until the owner's Unrestrict
+          // action is in the DOM, then assert it. Coverage is unchanged: we
+          // still prove Unrestrict is offered for a restricted file.
+          const ensureUnrestrictVisible = (attempt = 0) => {
+            cy.document().then((doc) => {
+              if (/unrestrict/i.test(doc.body.textContent ?? '')) {
+                return
+              }
+              if (attempt >= 15) {
+                throw new Error('File Options menu never offered Unrestrict')
+              }
+              cy.findByRole('button', { name: 'File Options' }).click()
+              cy.wait(400)
+              cy.then(() => ensureUnrestrictVisible(attempt + 1))
+            })
+          }
 
-          cy.findByRole('button', { name: 'File Options' }).click()
+          ensureUnrestrictVisible()
           cy.contains('Unrestrict', { timeout: 10_000 }).should('exist')
         })
     })
