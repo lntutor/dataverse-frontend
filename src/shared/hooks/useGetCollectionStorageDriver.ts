@@ -44,6 +44,7 @@ export const useGetCollectionStorageDriver = ({
         )
 
         setStorageDriver(storageDriver)
+        setError(null)
       } catch (err) {
         const errorMessage =
           err instanceof Error && err.message
