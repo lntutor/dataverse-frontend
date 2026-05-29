@@ -41,6 +41,7 @@ export const useGetCollectionAllowedStorageDrivers = ({
         )
 
         setAllowedStorageDrivers(allowedStorageDrivers)
+        setError(null)
       } catch (err) {
         const errorMessage =
           err instanceof Error && err.message
