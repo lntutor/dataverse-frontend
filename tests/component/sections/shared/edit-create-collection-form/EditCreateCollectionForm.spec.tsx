@@ -19,6 +19,7 @@ const metadataBlockInfoRepository = {} as MetadataBlockInfoRepository
 const userRepository: UserRepository = {} as UserRepository
 
 const testUser = UserMother.create()
+const testSuperUser = UserMother.createSuperUser()
 
 const PARENT_COLLECTION_ID = 'root'
 const PARENT_COLLECTION_NAME = 'Root'
@@ -81,6 +82,20 @@ const collectionFacets = CollectionFacetMother.createFacets()
 
 const allFacetableMetadataFields = MetadataBlockInfoMother.getAllFacetableMetadataFields()
 
+const allowedStorageDrivers = {
+  s3: 's3 (Default)',
+  swift: 'Swift'
+}
+
+const s3StorageDriver = {
+  name: 's3',
+  type: 's3',
+  label: 's3',
+  directUpload: true,
+  directDownload: true,
+  uploadOutOfBand: false
+}
+
 function EditCreateCollectionForm({
   collectionRepository,
   ...props
@@ -99,6 +114,9 @@ describe('EditCreateCollectionForm', () => {
     collectionRepository.create = cy.stub().resolves(1)
     collectionRepository.edit = cy.stub().resolves({})
     collectionRepository.getFacets = cy.stub().resolves(collectionFacets)
+    collectionRepository.getAllowedStorageDrivers = cy.stub().resolves(allowedStorageDrivers)
+    collectionRepository.getStorageDriver = cy.stub().resolves(s3StorageDriver)
+    collectionRepository.setStorageDriver = cy.stub().resolves('Storage driver updated.')
     userRepository.getAuthenticated = cy.stub().resolves(testUser)
     metadataBlockInfoRepository.getByCollectionId = cy.stub().resolves(colllectionMetadataBlocks)
     metadataBlockInfoRepository.getAll = cy.stub().resolves(allMetadataBlocksMock)
@@ -154,6 +172,39 @@ describe('EditCreateCollectionForm', () => {
       cy.findByLabelText(/^Affiliation/i).should('have.value', testUser.affiliation)
 
       cy.findByLabelText(/^Email/i).should('have.value', testUser.email)
+    })
+
+    it('does not show the storage field when the current user is not a superuser', () => {
+      cy.mountAuthenticated(
+        <EditCreateCollectionForm
+          mode="create"
+          user={testUser}
+          parentCollection={rootCollection}
+          collectionRepository={collectionRepository}
+          metadataBlockInfoRepository={metadataBlockInfoRepository}
+        />
+      )
+
+      cy.findByTestId('collection-form').should('exist')
+      cy.get('body').should('not.contain', 'Storage')
+    })
+
+    it('shows the allowed storage drivers when the current user is a superuser', () => {
+      cy.mountAuthenticated(
+        <EditCreateCollectionForm
+          mode="create"
+          user={testSuperUser}
+          parentCollection={rootCollection}
+          collectionRepository={collectionRepository}
+          metadataBlockInfoRepository={metadataBlockInfoRepository}
+        />,
+        undefined,
+        { superuser: true }
+      )
+
+      cy.findByLabelText(/^Storage/i).should('have.value', 's3')
+      cy.findByRole('option', { name: 's3 (Default)' }).should('exist')
+      cy.findByRole('option', { name: 'Swift' }).should('exist')
     })
 
     it('submit button should be disabled when form has not been touched', () => {
@@ -287,6 +338,30 @@ describe('EditCreateCollectionForm', () => {
       cy.findByText('Error').should('not.exist')
       cy.findByText('Success!').should('exist')
       cy.get('@setNeedsUpdate').should('have.been.calledWith', true)
+    })
+
+    it('sets the selected storage driver after creating a collection as a superuser', () => {
+      collectionRepository.setStorageDriver = cy.stub().as('setStorageDriver').resolves()
+
+      cy.mountAuthenticated(
+        <EditCreateCollectionForm
+          mode="create"
+          user={testSuperUser}
+          parentCollection={rootCollection}
+          collectionRepository={collectionRepository}
+          metadataBlockInfoRepository={metadataBlockInfoRepository}
+        />,
+        undefined,
+        { superuser: true }
+      )
+
+      cy.findByRole('button', { name: 'Apply suggestion' }).click()
+      cy.findByLabelText(/^Category/i).select(1)
+      cy.findByLabelText(/^Storage/i).select('swift')
+
+      cy.findByRole('button', { name: 'Create Collection' }).click()
+
+      cy.get('@setStorageDriver').should('have.been.calledWith', 1, 'swift')
     })
 
     it('submits a valid form and fails', () => {
@@ -1151,6 +1226,32 @@ describe('EditCreateCollectionForm', () => {
 
       cy.findByText('Error').should('not.exist')
       cy.findByText('Success!').should('exist')
+    })
+
+    it('sets the selected storage driver after editing a collection as a superuser', () => {
+      collectionRepository.setStorageDriver = cy.stub().as('setStorageDriver').resolves()
+
+      cy.mountAuthenticated(
+        <EditCreateCollectionForm
+          mode="edit"
+          user={testSuperUser}
+          collection={collectionBeingEdited}
+          parentCollection={{ id: PARENT_COLLECTION_ID, name: PARENT_COLLECTION_NAME }}
+          collectionRepository={collectionRepository}
+          metadataBlockInfoRepository={metadataBlockInfoRepository}
+        />,
+        undefined,
+        { superuser: true }
+      )
+
+      cy.findByLabelText(/^Storage/i).select('swift')
+      cy.findByRole('button', { name: 'Save Changes' }).click()
+
+      cy.get('@setStorageDriver').should(
+        'have.been.calledWith',
+        COLLECTION_BEING_EDITED_ID,
+        'swift'
+      )
     })
 
     it('submits a valid form and fails', () => {

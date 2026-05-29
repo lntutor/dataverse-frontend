@@ -16,7 +16,10 @@ import {
   deleteCollectionFeaturedItem,
   getCollectionsForLinking,
   linkCollection,
-  getCollectionLinks
+  getCollectionLinks,
+  getAllowedCollectionStorageDrivers,
+  getCollectionStorageDriver,
+  setCollectionStorageDriver
 } from '@iqss/dataverse-client-javascript'
 import { JSCollectionMapper } from '../mappers/JSCollectionMapper'
 import { CollectionDTO } from '../../domain/useCases/DTOs/CollectionDTO'
@@ -34,6 +37,8 @@ import { PublicationStatus } from '@/shared/core/domain/models/PublicationStatus
 import { CollectionSummary } from '@/collection/domain/models/CollectionSummary'
 import { LinkingObjectType } from '@/collection/domain/useCases/getCollectionsForLinking'
 import { CollectionLinks } from '@/collection/domain/models/CollectionLinks'
+import { AllowedStorageDrivers } from '@/collection/domain/models/AllowedStorageDrivers'
+import { StorageDriver } from '@/collection/domain/models/StorageDriver'
 
 export class CollectionJSDataverseRepository implements CollectionRepository {
   getById(id?: string): Promise<Collection> {
@@ -173,5 +178,20 @@ export class CollectionJSDataverseRepository implements CollectionRepository {
 
   getLinks(collectionIdOrAlias: number | string): Promise<CollectionLinks> {
     return getCollectionLinks.execute(collectionIdOrAlias)
+  }
+
+  getAllowedStorageDrivers(collectionIdOrAlias: number | string): Promise<AllowedStorageDrivers> {
+    return getAllowedCollectionStorageDrivers.execute(collectionIdOrAlias)
+  }
+
+  getStorageDriver(
+    collectionIdOrAlias: number | string,
+    getEffective?: boolean
+  ): Promise<StorageDriver> {
+    return getCollectionStorageDriver.execute(collectionIdOrAlias, getEffective)
+  }
+
+  setStorageDriver(collectionIdOrAlias: number | string, driverLabel: string): Promise<string> {
+    return setCollectionStorageDriver.execute(collectionIdOrAlias, driverLabel)
   }
 }

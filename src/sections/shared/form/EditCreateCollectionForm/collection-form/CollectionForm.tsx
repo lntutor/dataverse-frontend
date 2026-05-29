@@ -17,6 +17,7 @@ import { EditCreateCollectionFormMode } from '../EditCreateCollectionForm'
 import { RouteWithParams } from '@/sections/Route.enum'
 import { useCollectionRepositories } from '@/shared/contexts/repositories/RepositoriesProvider'
 import styles from './CollectionForm.module.scss'
+import { AllowedStorageDrivers } from '@/collection/domain/models/AllowedStorageDrivers'
 
 export interface CollectionFormProps {
   mode: EditCreateCollectionFormMode
@@ -26,6 +27,8 @@ export interface CollectionFormProps {
   allFacetableMetadataFields: MetadataField[]
   defaultCollectionFacets: CollectionFormFacet[]
   isEditingRootCollection: boolean
+  canSelectStorageDriver: boolean
+  allowedStorageDrivers: AllowedStorageDrivers
 }
 
 export const CollectionForm = ({
@@ -35,7 +38,9 @@ export const CollectionForm = ({
   allMetadataBlocksInfo,
   allFacetableMetadataFields,
   defaultCollectionFacets,
-  isEditingRootCollection
+  isEditingRootCollection,
+  canSelectStorageDriver,
+  allowedStorageDrivers
 }: CollectionFormProps) => {
   const { collectionRepository } = useCollectionRepositories()
   const formContainerRef = useRef<HTMLDivElement>(null)
@@ -53,7 +58,8 @@ export const CollectionForm = ({
     collectionIdOrParentCollectionId,
     collectionRepository,
     onSubmittedCollectionError,
-    form.formState.dirtyFields
+    form.formState.dirtyFields,
+    canSelectStorageDriver
   )
 
   function onSubmittedCollectionError() {
@@ -92,7 +98,11 @@ export const CollectionForm = ({
           onSubmit={form.handleSubmit(submitForm)}
           noValidate={true}
           data-testid="collection-form">
-          <TopFieldsSection isEditingRootCollection={isEditingRootCollection} />
+          <TopFieldsSection
+            isEditingRootCollection={isEditingRootCollection}
+            canSelectStorageDriver={canSelectStorageDriver}
+            allowedStorageDrivers={allowedStorageDrivers}
+          />
 
           <SeparationLine />
 

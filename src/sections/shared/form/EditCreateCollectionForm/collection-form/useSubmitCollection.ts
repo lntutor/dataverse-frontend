@@ -19,6 +19,7 @@ import {
 import { CollectionDTO } from '@/collection/domain/useCases/DTOs/CollectionDTO'
 import { createCollection } from '@/collection/domain/useCases/createCollection'
 import { editCollection } from '@/collection/domain/useCases/editCollection'
+import { setCollectionDriver } from '@/collection/domain/useCases/setCollectionDriver'
 import { RouteWithParams } from '@/sections/Route.enum'
 import { JSDataverseWriteErrorHandler } from '@/shared/helpers/JSDataverseWriteErrorHandler'
 import { CollectionFormHelper } from '../CollectionFormHelper'
@@ -51,7 +52,8 @@ export function useSubmitCollection(
   collectionIdOrParentCollectionId: string,
   collectionRepository: CollectionRepository,
   onSubmitErrorCallback: () => void,
-  dirtyFields: CollectionFormDirtyFields
+  dirtyFields: CollectionFormDirtyFields,
+  canSelectStorageDriver: boolean
 ): UseSubmitCollectionReturnType {
   const navigate = useNavigate()
   const { t } = useTranslation('collection')
@@ -101,12 +103,26 @@ export function useSubmitCollection(
       inheritFacetsFromParent: useFacetsFromParentChecked
     }
 
+    const shouldSetStorageDriver =
+      canSelectStorageDriver && Boolean(formData.storage) && Boolean(dirtyFields.storage)
+
+    const setSelectedStorageDriver = (collectionIdOrAlias: number | string): Promise<void> => {
+      if (!shouldSetStorageDriver) {
+        return Promise.resolve()
+      }
+
+      return setCollectionDriver(collectionRepository, collectionIdOrAlias, formData.storage).then(
+        () => undefined
+      )
+    }
+
     if (mode === 'create') {
       createCollection(
         collectionRepository,
         newOrUpdatedCollection,
         collectionIdOrParentCollectionId
       )
+        .then((newCollectionIdentifier) => setSelectedStorageDriver(newCollectionIdentifier))
         .then(() => {
           setSubmitError(null)
           setSubmissionStatus(SubmissionStatus.SubmitComplete)
@@ -126,6 +142,7 @@ export function useSubmitCollection(
         })
     } else {
       editCollection(collectionRepository, newOrUpdatedCollection, collectionIdOrParentCollectionId)
+        .then(() => setSelectedStorageDriver(collectionIdOrParentCollectionId))
         .then(() => {
           setSubmitError(null)
           setSubmissionStatus(SubmissionStatus.SubmitComplete)
