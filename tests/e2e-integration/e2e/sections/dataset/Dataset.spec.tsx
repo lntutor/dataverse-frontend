@@ -473,17 +473,11 @@ describe('Dataset', () => {
         })
     })
 
-    // Attempt 10 — keep the response stub (proven to land the page in a
-    // restricted-files state, icon assertion passed in attempt 8) and
-    // simply sleep for several seconds after the icon shows so any
-    // post-render side effects fully settle before we click File Options.
-    // Attempt 8's CI failure was "page updated while this command was
-    // executing… the button disappeared from the page": something on the
-    // page re-renders the file row in the window between Cypress finding
-    // the button and dispatching the click. A plain wait between the
-    // icon assertion and the click is the cheapest way to give that
-    // settle window. Re-query the button right before clicking so
-    // Cypress doesn't carry a stale reference across the sleep.
+    // The flat files endpoint is intercepted to force every file restricted
+    // (and drop any embargo) so the row is guaranteed restricted regardless of
+    // the backend's restrict-at-upload timing. The owner therefore sees the
+    // "Restricted with access" icon and, in the per-row File Options menu, the
+    // "Unrestrict" action.
     it('loads the restricted files when the user is logged in as owner', () => {
       cy.intercept(/\/api\/v1\/datasets\/[^/]+\/versions\/[^/]+\/files(?:\?|$)/, (req) => {
         req.continue((res) => {
@@ -511,29 +505,12 @@ describe('Dataset', () => {
 
           cy.findByText('Restricted with access Icon').should('exist')
 
-          // The File Options control is a react-bootstrap dropdown whose
-          // menu only mounts while open. On slow CI a single click races
-          // a background re-render — the toggle no-ops, or the just-opened
-          // menu re-closes — which is why earlier fixed waits and
-          // force-clicks stayed flaky. Re-open until the owner's Unrestrict
-          // action is in the DOM, then assert it. Coverage is unchanged: we
-          // still prove Unrestrict is offered for a restricted file.
-          const ensureUnrestrictVisible = (attempt = 0) => {
-            cy.document().then((doc) => {
-              if (/unrestrict/i.test(doc.body.textContent ?? '')) {
-                return
-              }
-              if (attempt >= 15) {
-                throw new Error('File Options menu never offered Unrestrict')
-              }
-              cy.findByRole('button', { name: 'File Options' }).click()
-              cy.wait(400)
-              cy.then(() => ensureUnrestrictVisible(attempt + 1))
-            })
-          }
-
-          ensureUnrestrictVisible()
-          cy.contains('Unrestrict', { timeout: 10_000 }).should('exist')
+          // File Options is a react-bootstrap dropdown that mounts its items
+          // when opened. Open it once and let Cypress retry the assertion until
+          // the menu has rendered; re-clicking the toggle would only close an
+          // already-open menu.
+          cy.findByRole('button', { name: 'File Options' }).click()
+          cy.findByRole('button', { name: 'Unrestrict' }).should('exist')
         })
     })
 
