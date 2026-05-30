@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useDeepCompareMemo } from 'use-deep-compare'
 import { FilePreview } from '../../../../files/domain/models/FilePreview'
 import { getCoreRowModel, Row, useReactTable } from '@tanstack/react-table'
@@ -40,15 +40,26 @@ export function useFilesTableScrollable(
     return result
   }, [selectedRowsModels, rowSelection])
 
+  // Recreating the column definitions on every render gives every cell a new
+  // component identity, so any incidental re-render (e.g. opening a per-row
+  // dropdown, which itself triggers a couple of re-renders) unmounts and
+  // remounts the row cells — closing the just-opened menu before it can show.
+  // Memoize so cell identities stay stable across those re-renders.
+  const columns = useMemo(
+    () =>
+      createColumnsDefinition(
+        paginationInfo,
+        fileSelection,
+        fileRepository,
+        datasetRepository,
+        accumulatedFilesCount
+      ),
+    [paginationInfo, fileSelection, fileRepository, datasetRepository, accumulatedFilesCount]
+  )
+
   const table = useReactTable({
     data: files,
-    columns: createColumnsDefinition(
-      paginationInfo,
-      fileSelection,
-      fileRepository,
-      datasetRepository,
-      accumulatedFilesCount
-    ),
+    columns,
     state: {
       rowSelection: rowSelection
     },
