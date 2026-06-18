@@ -1,0 +1,143 @@
+# .github/workflows/generate-war-for-server.yml
+name: generate-war-for-server
+
+on:
+  workflow_dispatch:
+    inputs:
+      server_name:
+        description: 'Dataverse server hostname or URL (e.g., demo.dataverse.org)'
+        type: string
+        required: true
+      realm_name:
+        description: 'Keycloak realm name (e.g., demo)'
+        type: string
+        required: true
+      basepath:
+        description: 'Server base path without slashes (e.g., modern). Leave blank for root.'
+        type: string
+        required: false
+        default: modern
+      keycloak_host:
+        description: 'Keycloak hostname or URL'
+        type: string
+        required: true
+        default: beta-keycloak.dataverse.org
+      oidc_storage_key_prefix:
+        description: 'Prefix for browser auth storage keys'
+        type: string
+        required: true
+        default: DV_
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Create .npmrc
+        run: |
+          cp .npmrc.example .npmrc
+          sed -i -e 's/<YOUR_GITHUB_AUTH_TOKEN>/${{ secrets.GITHUB_TOKEN }}/g' .npmrc
+          sed -i -e 's/<YOUR_NPM_AUTH_TOKEN>/${{ secrets.NPM_AUTH_TOKEN }}/g' .npmrc
+
+      - name: Prepare runtime config values
+        env:
+          SERVER_NAME: ${{ github.event.inputs.server_name }}
+          REALM_NAME: ${{ github.event.inputs.realm_name }}
+          KEYCLOAK_HOST_INPUT: ${{ github.event.inputs.keycloak_host }}
+          BASEPATH_INPUT: ${{ github.event.inputs.basepath }}
+          OIDC_STORAGE_KEY_PREFIX_INPUT: ${{ github.event.inputs.oidc_storage_key_prefix }}
+        run: |
+          SERVER_INPUT="$SERVER_NAME"
+          SERVER_INPUT="${SERVER_INPUT#http://}"
+          SERVER_INPUT="${SERVER_INPUT#https://}"
+          SERVER_HOST="${SERVER_INPUT%%/*}"
+
+          KEYCLOAK_INPUT="$KEYCLOAK_HOST_INPUT"
+          KEYCLOAK_INPUT="${KEYCLOAK_INPUT#http://}"
+          KEYCLOAK_INPUT="${KEYCLOAK_INPUT#https://}"
+          KEYCLOAK_HOST="${KEYCLOAK_INPUT%%/*}"
+
+          BASEPATH="$BASEPATH_INPUT"
+          BASEPATH="${BASEPATH#/}"
+          BASEPATH="${BASEPATH%/}"
+
+          if [ -n "$BASEPATH" ]; then
+            BUILD_BASE="/$BASEPATH"
+          else
+            BUILD_BASE="/"
+          fi
+
+          {
+            echo "BUILD_BASE=$BUILD_BASE"
+            echo "DATAVERSE_BACKEND_URL=https://$SERVER_HOST"
+            echo "OIDC_CLIENT_ID=spa"
+            echo "OIDC_AUTHORIZATION_ENDPOINT=https://$KEYCLOAK_HOST/realms/$REALM_NAME/protocol/openid-connect/auth"
+            echo "OIDC_TOKEN_ENDPOINT=https://$KEYCLOAK_HOST/realms/$REALM_NAME/protocol/openid-connect/token"
+            echo "OIDC_LOGOUT_ENDPOINT=https://$KEYCLOAK_HOST/realms/$REALM_NAME/protocol/openid-connect/logout"
+            echo "OIDC_STORAGE_KEY_PREFIX=$OIDC_STORAGE_KEY_PREFIX_INPUT"
+          } >> "$GITHUB_ENV"
+
+          {
+            echo "### Generated WAR runtime config"
+            echo "- Dataverse backend: https://$SERVER_HOST"
+            echo "- Keycloak realm: $REALM_NAME"
+            echo "- Keycloak host: https://$KEYCLOAK_HOST"
+            echo "- OIDC client ID: spa"
+            echo "- Build base: $BUILD_BASE"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build Dataverse UI Library
+        working-directory: packages/design-system
+        run: npm run build
+
+      - name: Build with base path
+        run: npm run build -- --base="$BUILD_BASE"
+
+      - name: Override runtime config.js
+        run: node ./scripts/write-runtime-config.mjs
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: built-site
+          path: ./dist
+          include-hidden-files: true
+
+  generate-war:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-java@v3
+        with:
+          distribution: zulu
+          java-version: '11'
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: built-site
+          path: ./dist
+
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v6
+
+      - name: Build war file
+        working-directory: ./deployment/payara
+        run: mvn package "-Dversion=${{ steps.branch-name.outputs.current_branch }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: war-file
+          path: ./deployment/payara/target/*.war
