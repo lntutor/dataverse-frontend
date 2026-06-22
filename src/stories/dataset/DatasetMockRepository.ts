@@ -22,6 +22,7 @@ import { DatasetVersionPaginationInfo } from '@/dataset/domain/models/DatasetVer
 import { DatasetUploadLimits } from '@/dataset/domain/models/DatasetUploadLimits'
 import { DatasetTypeMother } from '@tests/component/dataset/domain/models/DatasetTypeMother'
 import { DatasetType } from '@/dataset/domain/models/DatasetType'
+import { DatasetReview } from '@/dataset/domain/models/DatasetReview'
 
 export class DatasetMockRepository implements DatasetRepository {
   getAllWithCount: (
@@ -233,6 +234,14 @@ export class DatasetMockRepository implements DatasetRepository {
           numberOfFilesRemaining: 10,
           storageQuotaRemaining: 10737418240 // 10 GB in bytes
         })
+      }, FakerHelper.loadingTimout())
+    })
+  }
+
+  getDatasetReviews(_datasetId: string | number): Promise<DatasetReview[]> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve([])
       }, FakerHelper.loadingTimout())
     })
   }

@@ -144,7 +144,6 @@ describe('File', () => {
             GuestbookHelper.createAndGetByName(guestbookName).then(async (guestbook) => {
               await GuestbookHelper.assignToDataset(Number(dataset.id), guestbook.id)
               await DatasetHelper.publish(dataset.persistentId)
-
               return file
             })
           )
@@ -233,6 +232,7 @@ describe('File', () => {
             cy.findByTestId('download-original-file').should('exist').click({ force: true })
 
             cy.findByRole('dialog').should('be.visible')
+            cy.findByRole('dialog').find('.modal-title').should('contain.text', 'Dataset Terms')
             cy.findByText('Custom Dataset Terms').should('exist')
             // Guestbook fields should not be visible since there is no guestbook
             cy.findByLabelText(/name/i).should('not.exist')

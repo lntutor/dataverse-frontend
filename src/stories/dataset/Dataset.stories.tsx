@@ -18,6 +18,7 @@ import { WithNotImplementedModal } from '../WithNotImplementedModal'
 import { MetadataBlockInfoMockRepository } from '../shared-mock-repositories/metadata-block-info/MetadataBlockInfoMockRepository'
 import { DatasetMockRepository } from './DatasetMockRepository'
 import { DatasetWithGuestbookMockRepository } from './DatasetWithGuestbookMockRepository'
+import { DatasetWithReviewsMockRepository } from './DatasetWithReviewsMockRepository'
 import { CollectionMockRepository } from '@/stories/collection/CollectionMockRepository'
 import { ContactMockRepository } from '../shared-mock-repositories/contact/ContactMockRepository'
 import { DataverseInfoMockRepository } from '../shared-mock-repositories/info/DataverseInfoMockRepository'
@@ -25,12 +26,20 @@ import { GuestbookMockRepository } from '../shared-mock-repositories/guestbook/G
 import { GuestbookRepositoryProvider } from '@/sections/guestbooks/GuestbookRepositoryProvider'
 import { GuestbookRepository } from '@/guestbooks/domain/repositories/GuestbookRepository'
 import { DatasetProvider } from '@/sections/dataset/DatasetProvider'
-import { RepositoriesStoryProvider } from '@/stories/WithRepositories'
+import { RepositoriesStoryProvider, WithRepositories } from '@/stories/WithRepositories'
 
 const meta: Meta<typeof Dataset> = {
   title: 'Pages/Dataset',
   component: Dataset,
-  decorators: [WithI18next, WithSettings, WithAlerts],
+  decorators: [
+    WithI18next,
+    WithSettings,
+    WithAlerts,
+    WithRepositories({
+      collectionRepository: new CollectionMockRepository(),
+      datasetRepository: new DatasetMockRepository()
+    })
+  ],
   parameters: {
     // Sets the delay for all stories.
     chromatic: { delay: 15000, pauseAnimationAtEnd: true }
@@ -128,6 +137,23 @@ export const LoggedInAsOwner: Story = {
     <RepositoriesStoryProvider
       collectionRepository={new CollectionMockRepository()}
       datasetRepository={new DatasetMockRepository()}>
+      <Dataset
+        fileRepository={new FileMockRepository()}
+        metadataBlockInfoRepository={new MetadataBlockInfoMockRepository()}
+        contactRepository={new ContactMockRepository()}
+        filesTabInfiniteScrollEnabled
+        dataverseInfoRepository={new DataverseInfoMockRepository()}
+      />
+    </RepositoriesStoryProvider>
+  )
+}
+
+export const WithDatasetReviews: Story = {
+  decorators: [WithLayout, WithDataset, WithNotImplementedModal],
+  render: () => (
+    <RepositoriesStoryProvider
+      collectionRepository={new CollectionMockRepository()}
+      datasetRepository={new DatasetWithReviewsMockRepository()}>
       <Dataset
         fileRepository={new FileMockRepository()}
         metadataBlockInfoRepository={new MetadataBlockInfoMockRepository()}
