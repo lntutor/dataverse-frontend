@@ -87,12 +87,11 @@ describe('DatasetActionButtons', () => {
     })
 
     cy.mountAuthenticated(
-      <DatasetActionButtons
-        dataset={dataset}
+      <WithRepositories
         datasetRepository={datasetRepository}
-        collectionRepository={collectionRepository}
-        contactRepository={contactRepository}
-      />
+        collectionRepository={collectionRepository}>
+        <DatasetActionButtons dataset={dataset} contactRepository={contactRepository} />
+      </WithRepositories>
     )
 
     cy.findByRole('group', { name: 'Dataset Action Buttons' }).should('exist')

@@ -2255,13 +2255,14 @@ describe('DatasetMetadataForm', () => {
     const selectedTypeName = 'foo'
 
     cy.mountAuthenticated(
-      <DatasetMetadataForm
-        mode="create"
-        collectionId={collectionId}
-        datasetRepository={datasetRepository}
-        metadataBlockInfoRepository={metadataBlockInfoRepository}
-        datasetTypeName={selectedTypeName}
-      />
+      <WithRepositories datasetRepository={datasetRepository}>
+        <DatasetMetadataForm
+          mode="create"
+          collectionId={collectionId}
+          metadataBlockInfoRepository={metadataBlockInfoRepository}
+          datasetTypeName={selectedTypeName}
+        />
+      </WithRepositories>
     )
 
     cy.get('@getByCollectionIdStub').should(
