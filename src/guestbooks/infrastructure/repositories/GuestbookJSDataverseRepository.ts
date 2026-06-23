@@ -3,7 +3,9 @@ import {
   createGuestbook,
   downloadGuestbookResponsesByCollectionId,
   downloadGuestbookResponsesOfAGuestbook as downloadGuestbookResponsesByGuestbookId,
-  type CreateGuestbookDTO,
+  type CreateGuestbookDTO as JSDataverseCreateGuestbookDTO,
+  editGuestbook,
+  type EditGuestbookDTO as JSDataverseEditGuestbookDTO,
   type GuestbookResponseSubset,
   getGuestbooksByCollectionId,
   getGuestbook,
@@ -13,13 +15,15 @@ import {
 } from '@iqss/dataverse-client-javascript'
 import { GuestbookRepository } from '../../domain/repositories/GuestbookRepository'
 import { Guestbook } from '../../domain/models/Guestbook'
+import { GuestbookDTO } from '../../domain/useCases/DTOs/GuestbookDTO'
 
 export class GuestbookJSDataverseRepository implements GuestbookRepository {
-  createGuestbook(
-    collectionIdOrAlias: number | string,
-    guestbook: CreateGuestbookDTO
-  ): Promise<number> {
-    return createGuestbook.execute(guestbook, collectionIdOrAlias)
+  createGuestbook(collectionIdOrAlias: number | string, guestbook: GuestbookDTO): Promise<number> {
+    return createGuestbook.execute(guestbook as JSDataverseCreateGuestbookDTO, collectionIdOrAlias)
+  }
+
+  editGuestbook(guestbookId: number, guestbook: GuestbookDTO): Promise<void> {
+    return editGuestbook.execute(guestbookId, guestbook as JSDataverseEditGuestbookDTO)
   }
 
   getGuestbook(guestbookId: number): Promise<Guestbook> {

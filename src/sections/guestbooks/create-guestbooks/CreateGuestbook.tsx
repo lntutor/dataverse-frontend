@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
-import { type CreateGuestbookDTO } from '@iqss/dataverse-client-javascript'
 import { Alert, Button, Col, Form, Row } from '@iqss/dataverse-design-system'
 import { type NavigateFunction, useNavigate } from 'react-router-dom'
 import { DashLg, PlusLg } from 'react-bootstrap-icons'
 import { CollectionRepository } from '@/collection/domain/repositories/CollectionRepository'
 import { GuestbookQuestionType } from '@/guestbooks/domain/models/Guestbook'
+import { GuestbookDTO } from '@/guestbooks/domain/useCases/DTOs/GuestbookDTO'
 import { RouteWithParams } from '@/sections/Route.enum'
 import { useCollection } from '@/sections/collection/useCollection'
 import { NotFoundPage } from '@/sections/not-found-page/NotFoundPage'
@@ -123,7 +123,7 @@ export const CreateGuestbook = ({ collectionId, collectionRepository }: CreateGu
     })
   }
 
-  const buildGuestbookDTO = (): CreateGuestbookDTO => ({
+  const buildGuestbookDTO = (): GuestbookDTO => ({
     name: guestbookName.trim(),
     enabled: false,
     nameRequired,

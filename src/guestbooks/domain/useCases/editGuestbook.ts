@@ -1,10 +1,10 @@
 import { GuestbookRepository } from '../repositories/GuestbookRepository'
 import { GuestbookDTO } from './DTOs/GuestbookDTO'
 
-export function createGuestbook(
+export function editGuestbook(
   guestbookRepository: GuestbookRepository,
-  collectionIdOrAlias: number | string,
+  guestbookId: number,
   guestbook: GuestbookDTO
-): Promise<number> {
-  return guestbookRepository.createGuestbook(collectionIdOrAlias, guestbook)
+): Promise<void> {
+  return guestbookRepository.editGuestbook(guestbookId, guestbook)
 }

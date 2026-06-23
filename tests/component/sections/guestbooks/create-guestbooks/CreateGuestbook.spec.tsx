@@ -1,19 +1,20 @@
 import { act, renderHook } from '@testing-library/react'
-import { type CreateGuestbookDTO, WriteError } from '@iqss/dataverse-client-javascript'
+import { WriteError } from '@iqss/dataverse-client-javascript'
 import { CreateGuestbook } from '@/sections/guestbooks/create-guestbooks/CreateGuestbook'
 import { useCreateGuestbook } from '@/sections/guestbooks/create-guestbooks/useCreateGuestbook'
 import { GuestbookRepositoryProvider } from '@/sections/guestbooks/GuestbookRepositoryProvider'
 import { CollectionRepository } from '@/collection/domain/repositories/CollectionRepository'
 import { GuestbookRepository } from '@/guestbooks/domain/repositories/GuestbookRepository'
+import { GuestbookDTO } from '@/guestbooks/domain/useCases/DTOs/GuestbookDTO'
 import { CollectionMother } from '@tests/component/collection/domain/models/CollectionMother'
 import { createGuestbookRepositoryStub } from '../createGuestbookRepositoryStub'
 
 type CreateGuestbookStub = sinon.SinonStub<
-  [collectionIdOrAlias: number | string, guestbook: CreateGuestbookDTO],
+  [collectionIdOrAlias: number | string, guestbook: GuestbookDTO],
   Promise<number>
 >
 
-const guestbook: CreateGuestbookDTO = {
+const guestbook: GuestbookDTO = {
   name: 'Test Guestbook',
   enabled: false,
   emailRequired: true,
@@ -55,7 +56,7 @@ describe('CreateGuestbook', () => {
       </GuestbookRepositoryProvider>
     )
 
-  const expectGuestbookCreatedWith = (expectedGuestbook: CreateGuestbookDTO) => {
+  const expectGuestbookCreatedWith = (expectedGuestbook: GuestbookDTO) => {
     cy.wrap(null).should(() => {
       expect(createGuestbookStub).to.have.been.calledOnce
 
