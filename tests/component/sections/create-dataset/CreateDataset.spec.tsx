@@ -36,13 +36,10 @@ const mountCreateDataset = (component: JSX.Element): void => {
   )
 }
 
-const datasetTypesMock = DatasetTypeMother.creatDefaultDatasetType()
-
 describe('Create Dataset', () => {
   beforeEach(() => {
     datasetRepository.create = cy.stub().resolves({ persistentId: 'persistentId' })
     templateRepository.getTemplatesByCollectionId = cy.stub().resolves([])
-    datasetRepository.getAvailableDatasetTypes = cy.stub().resolves([datasetTypesMock])
     metadataBlockInfoRepository.getDisplayedOnCreateByCollectionId = cy
       .stub()
       .resolves(collectionMetadataBlocksInfo)
@@ -246,7 +243,6 @@ describe('Create Dataset', () => {
 
       mountCreateDataset(
         <CreateDataset
-          datasetRepository={datasetRepository}
           templateRepository={templateRepository}
           metadataBlockInfoRepository={metadataBlockInfoRepository}
           collectionId={'test-collectionId'}
@@ -268,7 +264,6 @@ describe('Create Dataset', () => {
 
       mountCreateDataset(
         <CreateDataset
-          datasetRepository={datasetRepository}
           templateRepository={templateRepository}
           metadataBlockInfoRepository={metadataBlockInfoRepository}
           collectionId={'test-collectionId'}
@@ -283,7 +278,8 @@ describe('Create Dataset', () => {
         DatasetTypeMother.creatDefaultDatasetType(),
         DatasetTypeMother.create({
           id: 5,
-          name: 'foo'
+          name: 'foo',
+          displayName: 'foo'
         })
       ]
 
@@ -297,7 +293,6 @@ describe('Create Dataset', () => {
 
       mountCreateDataset(
         <CreateDataset
-          datasetRepository={datasetRepository}
           templateRepository={templateRepository}
           metadataBlockInfoRepository={metadataBlockInfoRepository}
           collectionId={'test-collectionId'}
@@ -311,7 +306,8 @@ describe('Create Dataset', () => {
         DatasetTypeMother.creatDefaultDatasetType(),
         DatasetTypeMother.create({
           id: 5,
-          name: 'foo'
+          name: 'foo',
+          displayName: 'foo'
         })
       ]
 
@@ -325,7 +321,6 @@ describe('Create Dataset', () => {
 
       mountCreateDataset(
         <CreateDataset
-          datasetRepository={datasetRepository}
           templateRepository={templateRepository}
           metadataBlockInfoRepository={metadataBlockInfoRepository}
           collectionId={'test-collectionId'}
@@ -340,7 +335,8 @@ describe('Create Dataset', () => {
         DatasetTypeMother.creatDefaultDatasetType(),
         DatasetTypeMother.create({
           id: 5,
-          name: 'foo'
+          name: 'foo',
+          displayName: 'foo'
         })
       ]
 
@@ -354,7 +350,6 @@ describe('Create Dataset', () => {
 
       mountCreateDataset(
         <CreateDataset
-          datasetRepository={datasetRepository}
           templateRepository={templateRepository}
           metadataBlockInfoRepository={metadataBlockInfoRepository}
           collectionId={'test-collectionId'}
@@ -377,7 +372,8 @@ describe('Create Dataset', () => {
         DatasetTypeMother.creatDefaultDatasetType(),
         DatasetTypeMother.create({
           id: 5,
-          name: 'foo'
+          name: 'foo',
+          displayName: 'foo'
         })
       ]
 
@@ -391,7 +387,6 @@ describe('Create Dataset', () => {
 
       mountCreateDataset(
         <CreateDataset
-          datasetRepository={datasetRepository}
           templateRepository={templateRepository}
           metadataBlockInfoRepository={metadataBlockInfoRepository}
           collectionId={'test-collectionId'}

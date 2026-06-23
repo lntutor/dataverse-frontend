@@ -15,6 +15,12 @@ export class DatasetTypeMother {
   }
 
   static creatDefaultDatasetType(): DatasetType {
-    return this.create({ id: 1, name: 'dataset', linkedMetadataBlocks: [], availableLicenses: [] })
+    return this.create({
+      id: 1,
+      name: 'dataset',
+      displayName: 'dataset',
+      linkedMetadataBlocks: [],
+      availableLicenses: []
+    })
   }
 }
