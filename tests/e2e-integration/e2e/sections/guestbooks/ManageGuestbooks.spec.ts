@@ -36,7 +36,7 @@ describe('Manage Guestbooks', () => {
 
       cy.contains('tbody tr', guestbookName).within(() => {
         cy.findByRole('button', { name: 'Disable' }).should('exist')
-        cy.findByRole('button', { name: 'View' }).click()
+        cy.findByRole('button', { name: 'Preview' }).click()
       })
 
       cy.findByRole('dialog').within(() => {
@@ -66,20 +66,28 @@ describe('Manage Guestbooks', () => {
     cy.findByRole('button', { name: 'Create Dataset Guestbook' }).should('exist')
   })
 
-  it('opens the not implemented modal from copy and view responses actions', () => {
+  it('opens the not implemented modal from copy and navigates to view responses', () => {
     const guestbookName = `E2E Manage Guestbook Actions ${Date.now()}`
 
-    cy.wrap(GuestbookHelper.createAndGetByName(guestbookName), { timeout: 10000 }).then(() => {
-      cy.visit(GUESTBOOKS_PAGE_URL)
+    cy.wrap(GuestbookHelper.createAndGetByName(guestbookName), { timeout: 10000 }).then(
+      (guestbook) => {
+        cy.visit(GUESTBOOKS_PAGE_URL)
 
-      cy.contains('tbody tr', guestbookName).findByRole('button', { name: 'Copy' }).click()
-      closeNotImplementedModal()
+        cy.contains('tbody tr', guestbookName).findByRole('button', { name: 'Copy' }).click()
+        closeNotImplementedModal()
 
-      cy.contains('tbody tr', guestbookName)
-        .findByRole('button', { name: 'View Responses' })
-        .click()
-      closeNotImplementedModal()
-    })
+        cy.contains('tbody tr', guestbookName)
+          .findByRole('button', { name: 'View Responses' })
+          .click()
+
+        cy.url().should(
+          'include',
+          `${FRONTEND_BASE_PATH}/root/guestbooks/${guestbook.id}/responses`
+        )
+        cy.findByText('Guestbook Responses').should('exist')
+        cy.findByText(guestbookName).should('exist')
+      }
+    )
   })
 
   it('starts a guestbook responses download from the row download action', () => {

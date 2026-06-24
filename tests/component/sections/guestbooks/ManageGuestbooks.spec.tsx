@@ -1,5 +1,6 @@
 import { ReactNode, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useLocation } from 'react-router-dom'
 import { CollectionRepository } from '@/collection/domain/repositories/CollectionRepository'
 import { CollectionMother } from '@tests/component/collection/domain/models/CollectionMother'
 import { Guestbook } from '@/guestbooks/domain/models/Guestbook'
@@ -96,6 +97,12 @@ describe('ManageGuestbooks', () => {
     return <>{children}</>
   }
 
+  const LocationDisplay = () => {
+    const location = useLocation()
+
+    return <div data-testid="location-display">{location.pathname}</div>
+  }
+
   const defaultGuestbooks = [
     guestbook,
     rootGuestbook,
@@ -164,6 +171,7 @@ describe('ManageGuestbooks', () => {
         <Suspense fallback="loading">
           <TranslationPreloader>
             <Guestbooks collectionRepository={collectionRepository} collectionId={collectionId} />
+            <LocationDisplay />
           </TranslationPreloader>
         </Suspense>
       </GuestbookRepositoryProvider>
@@ -192,6 +200,16 @@ describe('ManageGuestbooks', () => {
       expect(win.URL['revokeObjectURL']).to.have.been.called
     })
     cy.findByText('Your download has started.').should('exist')
+  })
+
+  it('navigates to the guestbook responses page from the view responses action', () => {
+    mountComponent()
+
+    cy.contains('tbody tr', 'Downloadable Guestbook')
+      .findByRole('button', { name: 'View Responses' })
+      .click()
+
+    cy.findByTestId('location-display').should('have.text', '/17/guestbooks/10/responses')
   })
 
   it('sorts guestbooks by name and toggles sort direction on repeated clicks', () => {
@@ -466,7 +484,7 @@ describe('ManageGuestbooks', () => {
   it('opens and closes the preview guestbook modal from the page ui', () => {
     mountComponent()
 
-    cy.findAllByRole('button', { name: 'View' }).first().click()
+    cy.findAllByRole('button', { name: 'Preview' }).first().click()
     cy.findByRole('dialog').should('be.visible')
     cy.findByText('Preview Guestbook').should('exist')
     cy.findByText('Close').click()
@@ -535,14 +553,14 @@ describe('ManageGuestbooks', () => {
     cy.findByText('The guestbook status has been updated.').should('exist')
   })
 
-  it('only shows view, copy, download, and view responses actions for inherited guestbooks from a parent collection', () => {
+  it('only shows preview, copy, download, and view responses actions for inherited guestbooks from a parent collection', () => {
     mountComponent()
 
     cy.contains('tbody tr', 'Alpha Root Guestbook').within(() => {
       cy.findByText('Guestbook created at root').should('exist')
       cy.findByRole('button', { name: 'Disable' }).should('not.exist')
       cy.findByRole('button', { name: 'Enable' }).should('not.exist')
-      cy.findByRole('button', { name: 'View' }).should('exist')
+      cy.findByRole('button', { name: 'Preview' }).should('exist')
       cy.findByRole('button', { name: 'Copy' }).should('exist')
       cy.findByRole('button', { name: 'Edit' }).should('not.exist')
       cy.findByRole('button', { name: 'Download responses' }).should('exist')

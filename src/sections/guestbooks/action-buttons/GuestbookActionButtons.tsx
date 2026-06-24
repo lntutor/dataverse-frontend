@@ -9,6 +9,7 @@ interface GuestbookActionButtonsProps {
   onView: () => void
   onToggleEnabled: () => void
   onEdit?: () => void
+  onViewResponses?: () => void
   canToggleEnabled?: boolean
   canEdit?: boolean
   isTogglingEnabled?: boolean
@@ -23,6 +24,7 @@ export const GuestbookActionButtons = ({
   onView,
   onToggleEnabled,
   onEdit,
+  onViewResponses,
   canToggleEnabled = true,
   canEdit = true,
   isTogglingEnabled = false,
@@ -97,7 +99,7 @@ export const GuestbookActionButtons = ({
         <Button
           variant="secondary"
           size="sm"
-          onClick={() => setShowNotImplementedModal(true)}
+          onClick={onViewResponses ?? (() => setShowNotImplementedModal(true))}
           aria-label={t('actions.viewResponses')}>
           {t('actions.viewResponses')}
         </Button>

@@ -158,6 +158,14 @@ const EditGuestbookPage = lazy(() =>
   )
 )
 
+const GuestbookResponsesPage = lazy(() =>
+  import('../sections/guestbooks/view-responses/GuestbookResponsesFactory').then(
+    ({ GuestbookResponsesFactory }) => ({
+      default: () => GuestbookResponsesFactory.create()
+    })
+  )
+)
+
 const NotFoundPage = lazy(() =>
   import('../sections/not-found-page/NotFoundPageFactory').then(({ NotFoundPageFactory }) => ({
     default: () => NotFoundPageFactory.create()
@@ -369,6 +377,15 @@ export const routes: RouteObject[] = [
                 element: (
                   <Suspense fallback={<GuestbookSkeleton />}>
                     <EditGuestbookPage />
+                  </Suspense>
+                ),
+                errorElement: <ErrorPage />
+              },
+              {
+                path: Route.GUESTBOOKS_RESPONSES,
+                element: (
+                  <Suspense fallback={<GuestbookSkeleton />}>
+                    <GuestbookResponsesPage />
                   </Suspense>
                 ),
                 errorElement: <ErrorPage />

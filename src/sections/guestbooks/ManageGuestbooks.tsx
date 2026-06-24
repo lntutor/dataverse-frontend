@@ -380,6 +380,9 @@ export const Guestbooks = ({ collectionRepository, collectionId }: GuestbooksPro
                     onEdit={() =>
                       navigate(RouteWithParams.GUESTBOOKS_EDIT(collectionId, guestbook.id))
                     }
+                    onViewResponses={() =>
+                      navigate(RouteWithParams.GUESTBOOKS_RESPONSES(collectionId, guestbook.id))
+                    }
                     onToggleEnabled={() => handleToggleEnabled(guestbook)}
                     canToggleEnabled={isGuestbookFromCurrentCollection(guestbook)}
                     canEdit={isGuestbookFromCurrentCollection(guestbook)}

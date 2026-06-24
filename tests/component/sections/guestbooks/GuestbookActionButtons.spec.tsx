@@ -32,6 +32,7 @@ const GuestbookActionButtonsTestWrapper = ({
   isDownloadingResponses = false,
   onToggleEnabled = () => {},
   onEdit,
+  onViewResponses,
   onDownloadResponses = () => {}
 }: {
   isEnabled?: boolean
@@ -41,6 +42,7 @@ const GuestbookActionButtonsTestWrapper = ({
   isDownloadingResponses?: boolean
   onToggleEnabled?: () => void
   onEdit?: () => void
+  onViewResponses?: () => void
   onDownloadResponses?: () => void
 }) => {
   const [showPreview, setShowPreview] = useState(false)
@@ -52,6 +54,7 @@ const GuestbookActionButtonsTestWrapper = ({
         onView={() => setShowPreview(true)}
         onToggleEnabled={onToggleEnabled}
         onEdit={onEdit}
+        onViewResponses={onViewResponses}
         canToggleEnabled={canToggleEnabled}
         canEdit={canEdit}
         isTogglingEnabled={isTogglingEnabled}
@@ -101,9 +104,7 @@ describe('GuestbookActionButtons', () => {
         expect(buttonNames.indexOf('Delete')).to.be.greaterThan(
           buttonNames.indexOf('Download responses')
         )
-        expect(buttonNames.indexOf('Delete')).to.be.lessThan(
-          buttonNames.indexOf('View Responses')
-        )
+        expect(buttonNames.indexOf('Delete')).to.be.lessThan(buttonNames.indexOf('View Responses'))
       })
   })
 
@@ -111,7 +112,7 @@ describe('GuestbookActionButtons', () => {
     cy.customMount(<GuestbookActionButtonsTestWrapper canToggleEnabled={false} />)
 
     cy.findByRole('button', { name: 'Disable' }).should('not.exist')
-    cy.findByRole('button', { name: 'View' }).should('exist')
+    cy.findByRole('button', { name: 'Preview' }).should('exist')
     cy.findByRole('button', { name: 'Copy' }).should('exist')
     cy.findByRole('button', { name: 'Edit' }).should('exist')
     cy.findByRole('button', { name: 'Download responses' }).should('exist')
@@ -121,17 +122,17 @@ describe('GuestbookActionButtons', () => {
   it('does not render the edit button when editing is not allowed', () => {
     cy.customMount(<GuestbookActionButtonsTestWrapper canEdit={false} />)
 
-    cy.findByRole('button', { name: 'View' }).should('exist')
+    cy.findByRole('button', { name: 'Preview' }).should('exist')
     cy.findByRole('button', { name: 'Copy' }).should('exist')
     cy.findByRole('button', { name: 'Edit' }).should('not.exist')
     cy.findByRole('button', { name: 'Download responses' }).should('exist')
     cy.findByRole('button', { name: 'View Responses' }).should('exist')
   })
 
-  it('opens and closes the preview guestbook modal from the view button', () => {
+  it('opens and closes the preview guestbook modal from the preview button', () => {
     cy.customMount(<GuestbookActionButtonsTestWrapper />)
 
-    cy.findByRole('button', { name: 'View' }).click()
+    cy.findByRole('button', { name: 'Preview' }).click()
     cy.findByRole('dialog').should('be.visible')
     cy.findByText('Preview Guestbook').should('exist')
     cy.findByText('Downloadable Guestbook').should('exist')
@@ -156,6 +157,15 @@ describe('GuestbookActionButtons', () => {
 
     cy.findByRole('button', { name: 'Edit' }).click()
     cy.get('@onEdit').should('have.been.calledOnce')
+  })
+
+  it('triggers view responses handler when supplied', () => {
+    const onViewResponses = cy.stub().as('onViewResponses')
+
+    cy.customMount(<GuestbookActionButtonsTestWrapper onViewResponses={onViewResponses} />)
+
+    cy.findByRole('button', { name: 'View Responses' }).click()
+    cy.get('@onViewResponses').should('have.been.calledOnce')
   })
 
   it('uses enabled button defaults when optional loading flags are omitted', () => {
