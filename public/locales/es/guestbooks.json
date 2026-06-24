@@ -11,17 +11,20 @@
     "view": "Ver",
     "copy": "Copiar",
     "edit": "Editar",
+    "delete": "Eliminar",
     "downloadResponses": "Descargar respuestas",
     "viewResponses": "Ver respuestas"
   },
   "errors": {
     "getGuestbook": "Algo salió mal al obtener el libro de visitas. Inténtalo de nuevo más tarde.",
+    "editGuestbook": "Algo salió mal al editar el libro de visitas. Inténtalo de nuevo más tarde.",
     "toggleEnabled": "Algo salió mal al actualizar el estado del libro de visitas. Inténtalo de nuevo más tarde.",
     "downloadResponses": "Algo salió mal al descargar las respuestas del libro de visitas. Inténtalo de nuevo más tarde."
   },
   "alerts": {
     "statusUpdated": "El estado del libro de visitas se ha actualizado.",
-    "downloadStarted": "La descarga ha comenzado."
+    "downloadStarted": "La descarga ha comenzado.",
+    "updated": "El libro de visitas se ha actualizado."
   },
   "preview": {
     "title": "Vista previa del libro de visitas",
@@ -94,5 +97,8 @@
     },
     "submit": "Crear libro de visitas del dataset",
     "cancel": "Cancelar"
+  },
+  "edit": {
+    "title": "Editar libro de visitas del dataset"
   }
 }

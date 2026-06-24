@@ -17,6 +17,11 @@ import { GuestbookRepository } from '../../domain/repositories/GuestbookReposito
 import { Guestbook } from '../../domain/models/Guestbook'
 import { GuestbookDTO } from '../../domain/useCases/DTOs/GuestbookDTO'
 
+const normalizeGuestbook = (guestbook: Guestbook): Guestbook => ({
+  ...guestbook,
+  customQuestions: guestbook.customQuestions ?? []
+})
+
 export class GuestbookJSDataverseRepository implements GuestbookRepository {
   createGuestbook(collectionIdOrAlias: number | string, guestbook: GuestbookDTO): Promise<number> {
     return createGuestbook.execute(guestbook as JSDataverseCreateGuestbookDTO, collectionIdOrAlias)
@@ -27,7 +32,9 @@ export class GuestbookJSDataverseRepository implements GuestbookRepository {
   }
 
   getGuestbook(guestbookId: number): Promise<Guestbook> {
-    return getGuestbook.execute(guestbookId).then((guestbook) => guestbook as Guestbook)
+    return getGuestbook
+      .execute(guestbookId)
+      .then((guestbook) => normalizeGuestbook(guestbook as Guestbook))
   }
 
   getGuestbooksByCollectionId(
@@ -37,7 +44,7 @@ export class GuestbookJSDataverseRepository implements GuestbookRepository {
   ): Promise<Guestbook[]> {
     return getGuestbooksByCollectionId
       .execute(collectionIdOrAlias, includeStats, includeInherited)
-      .then((guestbooks) => guestbooks as Guestbook[])
+      .then((guestbooks) => (guestbooks as Guestbook[]).map(normalizeGuestbook))
   }
 
   getGuestbookResponsesByGuestbookId(

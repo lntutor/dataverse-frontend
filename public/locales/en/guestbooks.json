@@ -11,17 +11,20 @@
     "view": "View",
     "copy": "Copy",
     "edit": "Edit",
+    "delete": "Delete",
     "downloadResponses": "Download responses",
     "viewResponses": "View Responses"
   },
   "errors": {
     "getGuestbook": "Something went wrong getting the guestbook. Try again later.",
+    "editGuestbook": "Something went wrong editing the guestbook. Try again later.",
     "toggleEnabled": "Something went wrong updating the guestbook status. Try again later.",
     "downloadResponses": "Something went wrong downloading guestbook responses. Try again later."
   },
   "alerts": {
     "statusUpdated": "The guestbook status has been updated.",
-    "downloadStarted": "Your download has started."
+    "downloadStarted": "Your download has started.",
+    "updated": "The guestbook has been updated."
   },
   "preview": {
     "title": "Preview Guestbook",
@@ -94,5 +97,8 @@
     },
     "submit": "Create Dataset Guestbook",
     "cancel": "Cancel"
+  },
+  "edit": {
+    "title": "Edit Dataset Guestbook"
   }
 }

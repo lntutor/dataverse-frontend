@@ -31,6 +31,7 @@ const GuestbookActionButtonsTestWrapper = ({
   isTogglingEnabled = false,
   isDownloadingResponses = false,
   onToggleEnabled = () => {},
+  onEdit,
   onDownloadResponses = () => {}
 }: {
   isEnabled?: boolean
@@ -39,6 +40,7 @@ const GuestbookActionButtonsTestWrapper = ({
   isTogglingEnabled?: boolean
   isDownloadingResponses?: boolean
   onToggleEnabled?: () => void
+  onEdit?: () => void
   onDownloadResponses?: () => void
 }) => {
   const [showPreview, setShowPreview] = useState(false)
@@ -49,6 +51,7 @@ const GuestbookActionButtonsTestWrapper = ({
         isEnabled={isEnabled}
         onView={() => setShowPreview(true)}
         onToggleEnabled={onToggleEnabled}
+        onEdit={onEdit}
         canToggleEnabled={canToggleEnabled}
         canEdit={canEdit}
         isTogglingEnabled={isTogglingEnabled}
@@ -78,6 +81,30 @@ describe('GuestbookActionButtons', () => {
     cy.customMount(<GuestbookActionButtonsTestWrapper isEnabled={false} />)
 
     cy.findByRole('button', { name: 'Enable' }).should('exist')
+  })
+
+  it('shows the delete action only when the guestbook is disabled and places it after download responses', () => {
+    cy.customMount(<GuestbookActionButtonsTestWrapper />)
+
+    cy.findByRole('button', { name: 'Delete' }).should('not.exist')
+
+    cy.customMount(<GuestbookActionButtonsTestWrapper isEnabled={false} />)
+
+    cy.findByRole('button', { name: 'Delete' }).should('exist')
+    cy.findByRole('group', { name: 'Action' })
+      .find('button')
+      .then(($buttons) => {
+        const buttonNames = Array.from($buttons).map(
+          (button) => button.getAttribute('aria-label') ?? button.textContent?.trim()
+        )
+
+        expect(buttonNames.indexOf('Delete')).to.be.greaterThan(
+          buttonNames.indexOf('Download responses')
+        )
+        expect(buttonNames.indexOf('Delete')).to.be.lessThan(
+          buttonNames.indexOf('View Responses')
+        )
+      })
   })
 
   it('does not render the toggle button when toggling is not allowed', () => {
@@ -122,6 +149,15 @@ describe('GuestbookActionButtons', () => {
     cy.get('@onDownloadResponses').should('have.been.calledOnce')
   })
 
+  it('triggers edit handler when supplied', () => {
+    const onEdit = cy.stub().as('onEdit')
+
+    cy.customMount(<GuestbookActionButtonsTestWrapper onEdit={onEdit} />)
+
+    cy.findByRole('button', { name: 'Edit' }).click()
+    cy.get('@onEdit').should('have.been.calledOnce')
+  })
+
   it('uses enabled button defaults when optional loading flags are omitted', () => {
     const onToggleEnabled = cy.stub().as('onToggleEnabled')
     const onDownloadResponses = cy.stub().as('onDownloadResponses')
@@ -158,6 +194,14 @@ describe('GuestbookActionButtons', () => {
 
     cy.findByRole('button', { name: 'View Responses' }).click()
     cy.findByText('Not Implemented').should('exist')
+  })
+
+  it('opens the not implemented modal from the disabled guestbook delete button', () => {
+    cy.customMount(<GuestbookActionButtonsTestWrapper isEnabled={false} />)
+
+    cy.findByRole('button', { name: 'Delete' }).click()
+    cy.findByText('Not Implemented').should('exist')
+    cy.findByText(/This feature is not implemented yet in the Modern version./i).should('exist')
   })
 
   it('keeps toggle and download buttons enabled when loading flags are false', () => {

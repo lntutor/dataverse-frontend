@@ -66,16 +66,13 @@ describe('Manage Guestbooks', () => {
     cy.findByRole('button', { name: 'Create Dataset Guestbook' }).should('exist')
   })
 
-  it('opens the not implemented modal from copy, edit, and view responses actions', () => {
+  it('opens the not implemented modal from copy and view responses actions', () => {
     const guestbookName = `E2E Manage Guestbook Actions ${Date.now()}`
 
     cy.wrap(GuestbookHelper.createAndGetByName(guestbookName), { timeout: 10000 }).then(() => {
       cy.visit(GUESTBOOKS_PAGE_URL)
 
       cy.contains('tbody tr', guestbookName).findByRole('button', { name: 'Copy' }).click()
-      closeNotImplementedModal()
-
-      cy.contains('tbody tr', guestbookName).findByRole('button', { name: 'Edit' }).click()
       closeNotImplementedModal()
 
       cy.contains('tbody tr', guestbookName)
@@ -102,5 +99,39 @@ describe('Manage Guestbooks', () => {
 
       cy.findByText('Your download has started.').should('exist')
     })
+  })
+
+  it('edits a guestbook from the table edit action', () => {
+    const guestbookName = `E2E Edit Guestbook ${Date.now()}`
+    const updatedGuestbookName = `${guestbookName} Updated`
+
+    cy.wrap(GuestbookHelper.createAndGetByName(guestbookName), { timeout: 10000 }).then(
+      (guestbook) => {
+        cy.visit(GUESTBOOKS_PAGE_URL)
+
+        cy.contains('tbody tr', guestbookName).findByRole('button', { name: 'Edit' }).click()
+
+        cy.url().should('include', `${FRONTEND_BASE_PATH}/root/guestbooks/${guestbook.id}/edit`)
+        cy.findByRole('link', { name: 'Root' })
+          .closest('.breadcrumb')
+          .within(() => {
+            cy.findByText('Dataset Guestbooks').should('exist')
+            cy.findByText('Edit Dataset Guestbook').should('exist')
+          })
+        cy.findByLabelText(/^Guestbook Name/).should('have.value', guestbookName)
+
+        cy.findByLabelText(/^Guestbook Name/)
+          .clear()
+          .type(updatedGuestbookName)
+        cy.findByLabelText('Institution').check()
+        cy.findByRole('button', { name: 'Save Changes' }).click()
+
+        cy.findByText('The guestbook has been updated.').should('exist')
+        cy.url().should('include', GUESTBOOKS_PAGE_URL)
+        cy.contains('tbody tr', updatedGuestbookName).within(() => {
+          cy.findByRole('button', { name: 'Edit' }).should('exist')
+        })
+      }
+    )
   })
 })
