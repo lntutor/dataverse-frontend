@@ -1,6 +1,8 @@
 import { act, renderHook } from '@testing-library/react'
 import { WriteError } from '@iqss/dataverse-client-javascript'
+import { useLocation } from 'react-router-dom'
 import { CreateGuestbook } from '@/sections/guestbooks/create-guestbooks/CreateGuestbook'
+import { CreateGuestbookButton } from '@/sections/guestbooks/create-guestbooks/CreateGuestbookButton'
 import { useCreateGuestbook } from '@/sections/guestbooks/create-guestbooks/useCreateGuestbook'
 import { GuestbookRepositoryProvider } from '@/sections/guestbooks/GuestbookRepositoryProvider'
 import { CollectionRepository } from '@/collection/domain/repositories/CollectionRepository'
@@ -158,6 +160,49 @@ describe('CreateGuestbook', () => {
         }
       ]
     })
+  })
+
+  it('renders collection not found page when the collection cannot be fetched', () => {
+    collectionRepository.getById = cy.stub().rejects(new Error('missing collection'))
+
+    mountCreateGuestbook()
+
+    cy.findByTestId('not-found-page').should('exist')
+    cy.findByText(/We can't find the/i).should('exist')
+    cy.findByText('Collection').should('exist')
+  })
+
+  it('shows an error alert when creating the guestbook fails', () => {
+    createGuestbookStub.rejects(new Error('unexpected'))
+
+    mountCreateGuestbook()
+
+    cy.get('#guestbook-name').type('Research Use Guestbook')
+    cy.get('button[type="submit"]').click()
+
+    cy.findByText(/Something went wrong creating the guestbook/i).should('exist')
+  })
+})
+
+describe('CreateGuestbookButton', () => {
+  const LocationDisplay = () => {
+    const location = useLocation()
+
+    return <div data-testid="location-display">{location.pathname}</div>
+  }
+
+  it('navigates to the create guestbook page when clicked', () => {
+    cy.customMount(
+      <>
+        <CreateGuestbookButton collectionId="root" />
+        <LocationDisplay />
+      </>,
+      ['/root/guestbooks']
+    )
+
+    cy.findByRole('button', { name: 'Create Dataset Guestbook' }).click()
+
+    cy.findByTestId('location-display').should('have.text', '/root/guestbooks/create')
   })
 })
 

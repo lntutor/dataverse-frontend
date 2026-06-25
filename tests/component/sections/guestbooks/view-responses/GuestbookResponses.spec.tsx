@@ -1,4 +1,5 @@
 import { CollectionRepository } from '@/collection/domain/repositories/CollectionRepository'
+import { ReadError } from '@iqss/dataverse-client-javascript'
 import { Guestbook } from '@/guestbooks/domain/models/Guestbook'
 import { EventType, GuestbookResponse } from '@/guestbooks/domain/models/GuestbookResponse'
 import { GuestbookRepository } from '@/guestbooks/domain/repositories/GuestbookRepository'
@@ -157,6 +158,75 @@ describe('GuestbookResponses', () => {
     })
   })
 
+  it('sorts responses by date, type, file, and user and toggles sort direction', () => {
+    mountComponent()
+
+    cy.findByRole('button', { name: /^Date/ }).click()
+    cy.get('tbody tr td:first-child').then(($cells) => {
+      expect([...$cells].map((cell) => cell.textContent?.trim())).to.deep.equal([
+        'Alpha Dataset',
+        'Zeta Dataset'
+      ])
+    })
+
+    cy.findByRole('button', { name: /^Date/ }).click()
+    cy.get('tbody tr td:first-child').then(($cells) => {
+      expect([...$cells].map((cell) => cell.textContent?.trim())).to.deep.equal([
+        'Zeta Dataset',
+        'Alpha Dataset'
+      ])
+    })
+
+    cy.findByRole('button', { name: /^Type/ }).click()
+    cy.get('tbody tr td:first-child').then(($cells) => {
+      expect([...$cells].map((cell) => cell.textContent?.trim())).to.deep.equal([
+        'Alpha Dataset',
+        'Zeta Dataset'
+      ])
+    })
+
+    cy.findByRole('button', { name: /^File/ }).click()
+    cy.get('tbody tr td:first-child').then(($cells) => {
+      expect([...$cells].map((cell) => cell.textContent?.trim())).to.deep.equal([
+        'Alpha Dataset',
+        'Zeta Dataset'
+      ])
+    })
+
+    cy.findByRole('button', { name: /^User/ }).click()
+    cy.get('tbody tr td:first-child').then(($cells) => {
+      expect([...$cells].map((cell) => cell.textContent?.trim())).to.deep.equal([
+        'Alpha Dataset',
+        'Zeta Dataset'
+      ])
+    })
+  })
+
+  it('renders missing file names as empty and falls back to unknown event type label', () => {
+    ;(
+      guestbookRepository.getGuestbookResponsesByGuestbookId as Cypress.Agent<sinon.SinonStub>
+    ).resolves({
+      guestbookResponses: [
+        {
+          id: 3,
+          dataset: 'Unknown Event Dataset',
+          datasetPid: 'doi:10.5072/FK2/UNKNOWN',
+          date: '2026-03-01T00:00:00.000Z',
+          type: 'UnknownEvent' as EventType,
+          userName: 'Unknown User'
+        }
+      ],
+      totalGuestbookResponseCount: 1
+    })
+
+    mountComponent()
+
+    cy.contains('tbody tr', 'Unknown Event Dataset').within(() => {
+      cy.findByText('UnknownEvent').should('exist')
+      cy.get('td').eq(3).should('have.text', '')
+    })
+  })
+
   it('downloads guestbook responses from the page action', () => {
     mountComponent()
 
@@ -168,6 +238,18 @@ describe('GuestbookResponses', () => {
       guestbook.id
     )
     cy.findByText('Your download has started.').should('exist')
+  })
+
+  it('shows an error when downloading guestbook responses fails', () => {
+    ;(
+      guestbookRepository.downloadGuestbookResponsesByGuestbookId as Cypress.Agent<sinon.SinonStub>
+    ).rejects(new Error('download failed'))
+
+    mountComponent()
+
+    cy.findByRole('button', { name: 'Download Responses' }).click()
+
+    cy.findByText(/Something went wrong downloading guestbook responses/i).should('exist')
   })
 
   it('shows no records found when the guestbook has no responses', () => {
@@ -182,6 +264,44 @@ describe('GuestbookResponses', () => {
 
     cy.findByText('0 Responses').should('exist')
     cy.findByText('No records found.').should('exist')
+  })
+
+  it('renders collection not found page when the collection cannot be fetched', () => {
+    collectionRepository.getById = cy.stub().rejects(new Error('missing collection'))
+
+    mountComponent()
+
+    cy.findByTestId('not-found-page').should('exist')
+    cy.findByText(/We can't find the/i).should('exist')
+    cy.findByText('Collection').should('exist')
+  })
+
+  it('renders not found page when the guestbook cannot be found', () => {
+    ;(guestbookRepository.getGuestbook as Cypress.Agent<sinon.SinonStub>).resolves(undefined)
+
+    mountComponent()
+
+    cy.findByTestId('not-found-page').should('exist')
+  })
+
+  it('shows an error alert when getting the guestbook fails', () => {
+    ;(guestbookRepository.getGuestbook as Cypress.Agent<sinon.SinonStub>).rejects(
+      new ReadError('Guestbook lookup failed')
+    )
+
+    mountComponent()
+
+    cy.findByText(/Guestbook lookup failed/i).should('exist')
+  })
+
+  it('shows an error alert when getting guestbook responses fails', () => {
+    ;(
+      guestbookRepository.getGuestbookResponsesByGuestbookId as Cypress.Agent<sinon.SinonStub>
+    ).rejects(new Error('unexpected'))
+
+    mountComponent()
+
+    cy.findByText(/Something went wrong getting guestbook responses/i).should('exist')
   })
 
   it('paginates guestbook responses', () => {

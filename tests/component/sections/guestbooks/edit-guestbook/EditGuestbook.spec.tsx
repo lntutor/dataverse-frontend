@@ -106,4 +106,45 @@ describe('EditGuestbook', () => {
     cy.findByRole('button', { name: 'Save Changes' }).should('exist')
     cy.findByLabelText('Add question').should('exist')
   })
+
+  it('renders collection not found page when the collection cannot be fetched', () => {
+    collectionRepository.getById = cy.stub().rejects(new Error('missing collection'))
+
+    mountComponent()
+
+    cy.findByTestId('not-found-page').should('exist')
+    cy.findByText(/We can't find the/i).should('exist')
+    cy.findByText('Collection').should('exist')
+  })
+
+  it('renders not found page when the guestbook cannot be found', () => {
+    ;(guestbookRepository.getGuestbook as Cypress.Agent<sinon.SinonStub>).resolves(undefined)
+
+    mountComponent()
+
+    cy.findByTestId('not-found-page').should('exist')
+  })
+
+  it('shows an error alert when getting the guestbook fails', () => {
+    ;(guestbookRepository.getGuestbook as Cypress.Agent<sinon.SinonStub>).rejects(
+      new Error('unexpected')
+    )
+
+    mountComponent()
+
+    cy.findByText(/Something went wrong getting the guestbook/i).should('exist')
+  })
+
+  it('shows an error alert when editing the guestbook fails', () => {
+    ;(guestbookRepository.editGuestbook as Cypress.Agent<sinon.SinonStub>).rejects(
+      new Error('unexpected')
+    )
+
+    mountComponent()
+
+    cy.findByDisplayValue('Research Guestbook').clear().type('Updated Guestbook')
+    cy.findByRole('button', { name: 'Save Changes' }).click()
+
+    cy.findByText(/unexpected/i).should('exist')
+  })
 })
