@@ -119,6 +119,36 @@ describe('PaginationControls', () => {
     cy.wrap(onPaginationInfoChange).should('have.been.calledWith', paginationInfo.goToPage(20))
   })
 
+  it('disables first and previous buttons on the first page', () => {
+    cy.customMount(
+      <PaginationControls
+        initialPaginationInfo={paginationInfo.goToPage(1)}
+        onPaginationInfoChange={() => {}}
+      />
+    )
+
+    cy.findByRole('button', { name: 'First' }).should('not.exist')
+    cy.findByRole('button', { name: 'Previous' }).should('not.exist')
+    cy.findByRole('button', { name: 'Next' }).should('exist').should('not.have.class', 'disabled')
+    cy.findByRole('button', { name: 'Last' }).should('exist').should('not.have.class', 'disabled')
+  })
+
+  it('disables next and last buttons on the last page', () => {
+    cy.customMount(
+      <PaginationControls
+        initialPaginationInfo={paginationInfo.goToPage(20)}
+        onPaginationInfoChange={() => {}}
+      />
+    )
+
+    cy.findByRole('button', { name: 'First' }).should('exist').should('not.have.class', 'disabled')
+    cy.findByRole('button', { name: 'Previous' })
+      .should('exist')
+      .should('not.have.class', 'disabled')
+    cy.findByRole('button', { name: 'Next' }).should('not.exist')
+    cy.findByRole('button', { name: 'Last' }).should('not.exist')
+  })
+
   it('selecting a page size calls setPageSize with the selected value', () => {
     const onPaginationInfoChange = cy.stub().as('onPaginationInfoChange')
     cy.customMount(
@@ -149,5 +179,36 @@ describe('PaginationControls', () => {
     )
 
     cy.findByLabelText('Items per page').should('not.exist')
+  })
+
+  it('updates pagination controls when the total number of items changes', () => {
+    const onPaginationInfoChange = cy.stub().as('onPaginationInfoChange')
+    const initialPaginationInfo = new PaginationInfo<FilePaginationInfo | DatasetPaginationInfo>(
+      1,
+      pageSize,
+      10
+    )
+
+    cy.customMount(
+      <PaginationControls
+        initialPaginationInfo={initialPaginationInfo}
+        onPaginationInfoChange={onPaginationInfoChange}
+      />
+    ).then(({ rerender }) => {
+      cy.findByRole('button', { name: 'Next' }).should('not.exist')
+
+      rerender(
+        <PaginationControls
+          initialPaginationInfo={initialPaginationInfo.withTotal(30)}
+          onPaginationInfoChange={onPaginationInfoChange}
+        />
+      )
+    })
+
+    cy.findByRole('button', { name: 'Next' }).should('exist')
+    cy.wrap(onPaginationInfoChange).should(
+      'have.been.calledWith',
+      initialPaginationInfo.withTotal(30)
+    )
   })
 })
