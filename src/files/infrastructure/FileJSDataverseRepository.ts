@@ -55,6 +55,12 @@ export class FileJSDataverseRepository implements FileRepository {
     return requireAppConfig().backendUrl
   }
 
+  private static readonly guestFilePermissions: FilePermissions = {
+    canDownloadFile: false,
+    canManageFilePermissions: false,
+    canEditOwnerDataset: false
+  }
+
   getAllByDatasetPersistentId(
     datasetPersistentId: string,
     datasetVersion: DatasetVersion,
@@ -177,7 +183,11 @@ export class FileJSDataverseRepository implements FileRepository {
     )
   }
   private static getAllWithPermissions(files: JSFile[]): Promise<FilePermissions[]> {
-    return Promise.all(files.map((jsFile) => this.getPermissionsById(jsFile.id)))
+    return Promise.all(
+      files.map((jsFile) =>
+        this.getPermissionsByIdOrGuest(jsFile.id, jsFile).then(({ permissions }) => permissions)
+      )
+    )
   }
 
   private static getPermissionsById(id: number): Promise<FilePermissions> {
@@ -260,13 +270,17 @@ export class FileJSDataverseRepository implements FileRepository {
   }
 
   getById(id: number, datasetVersionNumber?: string): Promise<File> {
-    return FileJSDataverseRepository.getPermissionsById(id)
-      .then((permissions) => {
+    return FileJSDataverseRepository.getPermissionsByIdOrGuest(id)
+      .then(({ permissions, isGuestFallback }) => {
         const includeDeaccessioned = permissions?.canEditOwnerDataset
 
         return getFileAndDataset
           .execute(id, datasetVersionNumber, includeDeaccessioned)
           .then(([jsFile, jsDataset]) => {
+            const resolvedPermissions = isGuestFallback
+              ? FileJSDataverseRepository.getGuestPermissionsForFile(jsFile)
+              : permissions
+
             return Promise.all([
               jsFile,
               jsDataset,
@@ -277,7 +291,7 @@ export class FileJSDataverseRepository implements FileRepository {
                 includeDeaccessioned
               ),
               FileJSDataverseRepository.getDownloadCountById(jsFile.id, jsFile.publicationDate),
-              Promise.resolve(permissions),
+              Promise.resolve(resolvedPermissions),
               FileJSDataverseRepository.getThumbnailById(jsFile.id),
               FileJSDataverseRepository.getTabularDataById(jsFile.id, jsFile.tabularData)
             ])
@@ -308,6 +322,41 @@ export class FileJSDataverseRepository implements FileRepository {
       .catch((error: ReadError) => {
         throw new Error(error.message)
       })
+  }
+
+  private static getPermissionsByIdOrGuest(
+    id: number,
+    jsFile?: JSFile
+  ): Promise<{
+    permissions: FilePermissions
+    isGuestFallback: boolean
+  }> {
+    return FileJSDataverseRepository.getPermissionsById(id)
+      .then((permissions) => ({ permissions, isGuestFallback: false }))
+      .catch((error: ReadError) => {
+        if (error instanceof ReadError) {
+          const errorHandler = new JSDataverseReadErrorHandler(error)
+
+          if (errorHandler.getStatusCode() === 401) {
+            return {
+              permissions:
+                jsFile !== undefined
+                  ? FileJSDataverseRepository.getGuestPermissionsForFile(jsFile)
+                  : FileJSDataverseRepository.guestFilePermissions,
+              isGuestFallback: true
+            }
+          }
+        }
+
+        throw error
+      })
+  }
+
+  private static getGuestPermissionsForFile(jsFile: JSFile): FilePermissions {
+    return {
+      ...FileJSDataverseRepository.guestFilePermissions,
+      canDownloadFile: !jsFile.restricted && jsFile.embargo === undefined
+    }
   }
 
   private static getCitationById(
