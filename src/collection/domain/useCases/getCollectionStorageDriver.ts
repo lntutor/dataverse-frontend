@@ -5,6 +5,6 @@ export async function getCollectionStorageDriver(
   collectionRepository: CollectionRepository,
   collectionIdOrAlias: number | string,
   getEffective?: boolean
-): Promise<StorageDriver> {
+): Promise<StorageDriver | undefined> {
   return collectionRepository.getStorageDriver(collectionIdOrAlias, getEffective)
 }

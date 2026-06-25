@@ -263,7 +263,7 @@ export class CollectionMockRepository implements CollectionRepository {
   getStorageDriver(
     _collectionIdOrAlias: number | string,
     _getEffective?: boolean
-  ): Promise<StorageDriver> {
+  ): Promise<StorageDriver | undefined> {
     return new Promise((resolve) => {
       setTimeout(() => {
         resolve({

@@ -13,12 +13,16 @@ interface TopFieldsSectionProps {
   isEditingRootCollection: boolean
   canSelectStorageDriver: boolean
   allowedStorageDrivers: AllowedStorageDrivers
+  showInheritedOrDefaultStorageDriverOption: boolean
+  inheritedOrDefaultStorageDriverName?: string
 }
 
 export const TopFieldsSection = ({
   isEditingRootCollection,
   canSelectStorageDriver,
-  allowedStorageDrivers
+  allowedStorageDrivers,
+  showInheritedOrDefaultStorageDriverOption,
+  inheritedOrDefaultStorageDriverName
 }: TopFieldsSectionProps) => {
   const { t } = useTranslation('shared', { keyPrefix: 'collectionForm' })
   const { control } = useFormContext()
@@ -160,7 +164,13 @@ export const TopFieldsSection = ({
       <Row>
         <IdentifierField rules={aliasRules} />
 
-        {canSelectStorageDriver && <StorageField allowedStorageDrivers={allowedStorageDrivers} />}
+        {canSelectStorageDriver && (
+          <StorageField
+            allowedStorageDrivers={allowedStorageDrivers}
+            showInheritedOrDefaultStorageDriverOption={showInheritedOrDefaultStorageDriverOption}
+            inheritedOrDefaultStorageDriverName={inheritedOrDefaultStorageDriverName}
+          />
+        )}
       </Row>
 
       {/* Category (type) & Email (contacts) & Description */}

@@ -43,7 +43,7 @@ export const useGetCollectionStorageDriver = ({
           getEffective
         )
 
-        setStorageDriver(storageDriver)
+        setStorageDriver(storageDriver ?? null)
         setError(null)
       } catch (err) {
         const errorMessage =

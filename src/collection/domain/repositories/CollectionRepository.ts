@@ -64,6 +64,6 @@ export interface CollectionRepository {
   getStorageDriver(
     collectionIdOrAlias: number | string,
     getEffective?: boolean
-  ): Promise<StorageDriver>
+  ): Promise<StorageDriver | undefined>
   setStorageDriver(collectionIdOrAlias: number | string, driverLabel: string): Promise<string>
 }

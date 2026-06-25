@@ -83,7 +83,7 @@ const collectionFacets = CollectionFacetMother.createFacets()
 const allFacetableMetadataFields = MetadataBlockInfoMother.getAllFacetableMetadataFields()
 
 const allowedStorageDrivers = {
-  s3: 's3 (Default)',
+  s3: 's3',
   swift: 'Swift'
 }
 
@@ -203,8 +203,36 @@ describe('EditCreateCollectionForm', () => {
       )
 
       cy.findByLabelText(/^Storage/i).should('have.value', 's3')
-      cy.findByRole('option', { name: 's3 (Default)' }).should('exist')
+      cy.findByRole('option', { name: 's3' }).should('exist')
       cy.findByRole('option', { name: 'Swift' }).should('exist')
+    })
+
+    it('shows the inherited or default storage driver option when creating under a collection without an explicit storage driver', () => {
+      const getStorageDriver = cy.stub().as('getStorageDriver')
+      getStorageDriver.withArgs(PARENT_COLLECTION_ID, false).resolves(undefined)
+      getStorageDriver.withArgs(PARENT_COLLECTION_ID, true).resolves(s3StorageDriver)
+      collectionRepository.getStorageDriver = getStorageDriver
+
+      cy.mountAuthenticated(
+        <EditCreateCollectionForm
+          mode="create"
+          user={testSuperUser}
+          parentCollection={rootCollection}
+          collectionRepository={collectionRepository}
+          metadataBlockInfoRepository={metadataBlockInfoRepository}
+        />,
+        undefined,
+        { superuser: true }
+      )
+
+      cy.findByLabelText(/^Storage/i).should('have.value', '')
+      cy.findByRole('option', {
+        name: 'Use inherited or default storage driver (s3 (Default))'
+      }).should('exist')
+      cy.findByRole('option', { name: 's3' }).should('exist')
+      cy.findByRole('option', { name: 'Swift' }).should('exist')
+      cy.get('@getStorageDriver').should('have.been.calledWith', PARENT_COLLECTION_ID, false)
+      cy.get('@getStorageDriver').should('have.been.calledWith', PARENT_COLLECTION_ID, true)
     })
 
     it('submit button should be disabled when form has not been touched', () => {
@@ -1286,6 +1314,35 @@ describe('EditCreateCollectionForm', () => {
         COLLECTION_BEING_EDITED_ID,
         'swift'
       )
+    })
+
+    it('shows the inherited or default storage driver option when editing a collection without an explicit storage driver', () => {
+      const getStorageDriver = cy.stub().as('getStorageDriver')
+      getStorageDriver.withArgs(COLLECTION_BEING_EDITED_ID, false).resolves(undefined)
+      getStorageDriver.withArgs(COLLECTION_BEING_EDITED_ID, true).resolves(s3StorageDriver)
+      collectionRepository.getStorageDriver = getStorageDriver
+
+      cy.mountAuthenticated(
+        <EditCreateCollectionForm
+          mode="edit"
+          user={testSuperUser}
+          collection={collectionBeingEdited}
+          parentCollection={{ id: PARENT_COLLECTION_ID, name: PARENT_COLLECTION_NAME }}
+          collectionRepository={collectionRepository}
+          metadataBlockInfoRepository={metadataBlockInfoRepository}
+        />,
+        undefined,
+        { superuser: true }
+      )
+
+      cy.findByLabelText(/^Storage/i).should('have.value', '')
+      cy.findByRole('option', {
+        name: 'Use inherited or default storage driver (s3 (Default))'
+      }).should('exist')
+      cy.findByRole('option', { name: 's3' }).should('exist')
+      cy.findByRole('option', { name: 'Swift' }).should('exist')
+      cy.get('@getStorageDriver').should('have.been.calledWith', COLLECTION_BEING_EDITED_ID, false)
+      cy.get('@getStorageDriver').should('have.been.calledWith', COLLECTION_BEING_EDITED_ID, true)
     })
 
     it('submits a valid form and fails', () => {

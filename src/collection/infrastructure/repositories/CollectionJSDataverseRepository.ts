@@ -187,7 +187,7 @@ export class CollectionJSDataverseRepository implements CollectionRepository {
   getStorageDriver(
     collectionIdOrAlias: number | string,
     getEffective?: boolean
-  ): Promise<StorageDriver> {
+  ): Promise<StorageDriver | undefined> {
     return getCollectionStorageDriver.execute(collectionIdOrAlias, getEffective)
   }
 

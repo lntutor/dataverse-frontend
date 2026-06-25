@@ -29,6 +29,8 @@ export interface CollectionFormProps {
   isEditingRootCollection: boolean
   canSelectStorageDriver: boolean
   allowedStorageDrivers: AllowedStorageDrivers
+  showInheritedOrDefaultStorageDriverOption: boolean
+  inheritedOrDefaultStorageDriverName?: string
 }
 
 export const CollectionForm = ({
@@ -40,7 +42,9 @@ export const CollectionForm = ({
   defaultCollectionFacets,
   isEditingRootCollection,
   canSelectStorageDriver,
-  allowedStorageDrivers
+  allowedStorageDrivers,
+  showInheritedOrDefaultStorageDriverOption,
+  inheritedOrDefaultStorageDriverName
 }: CollectionFormProps) => {
   const { collectionRepository } = useCollectionRepositories()
   const formContainerRef = useRef<HTMLDivElement>(null)
@@ -102,6 +106,8 @@ export const CollectionForm = ({
             isEditingRootCollection={isEditingRootCollection}
             canSelectStorageDriver={canSelectStorageDriver}
             allowedStorageDrivers={allowedStorageDrivers}
+            showInheritedOrDefaultStorageDriverOption={showInheritedOrDefaultStorageDriverOption}
+            inheritedOrDefaultStorageDriverName={inheritedOrDefaultStorageDriverName}
           />
 
           <SeparationLine />

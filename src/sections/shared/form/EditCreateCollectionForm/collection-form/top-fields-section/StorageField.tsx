@@ -5,14 +5,20 @@ import { AllowedStorageDrivers } from '@/collection/domain/models/AllowedStorage
 
 interface StorageFieldProps {
   allowedStorageDrivers: AllowedStorageDrivers
+  showInheritedOrDefaultStorageDriverOption: boolean
+  inheritedOrDefaultStorageDriverName?: string
 }
 
-export const StorageField = ({ allowedStorageDrivers }: StorageFieldProps) => {
+export const StorageField = ({
+  allowedStorageDrivers,
+  showInheritedOrDefaultStorageDriverOption,
+  inheritedOrDefaultStorageDriverName
+}: StorageFieldProps) => {
   const { t } = useTranslation('shared', { keyPrefix: 'collectionForm' })
   const { control } = useFormContext()
   const storageDriverOptions = Object.entries(allowedStorageDrivers)
 
-  if (storageDriverOptions.length === 0) {
+  if (storageDriverOptions.length === 0 && !showInheritedOrDefaultStorageDriverOption) {
     return null
   }
 
@@ -31,6 +37,13 @@ export const StorageField = ({ allowedStorageDrivers }: StorageFieldProps) => {
               value={value as string}
               isInvalid={invalid}
               ref={ref}>
+              {showInheritedOrDefaultStorageDriverOption && (
+                <option value="">
+                  {t('fields.storage.inheritedOrDefaultOption', {
+                    storageDriver: inheritedOrDefaultStorageDriverName ?? t('unknown')
+                  })}
+                </option>
+              )}
               {storageDriverOptions.map(([driverLabel, displayName]) => (
                 <option value={driverLabel} key={driverLabel}>
                   {displayName}

@@ -124,6 +124,17 @@ export const EditCreateCollectionForm = ({
     collectionIdOrAlias: storageDriverCollectionId,
     collectionRepository,
     enabled: canSelectStorageDriver,
+    getEffective: false
+  })
+
+  const {
+    storageDriver: effectiveStorageDriver,
+    isLoading: isLoadingEffectiveStorageDriver,
+    error: effectiveStorageDriverError
+  } = useGetCollectionStorageDriver({
+    collectionIdOrAlias: storageDriverCollectionId,
+    collectionRepository,
+    enabled: canSelectStorageDriver,
     getEffective: true
   })
 
@@ -176,7 +187,8 @@ export const EditCreateCollectionForm = ({
     isLoadingCollectionFacets ||
     isLoadingFacetableMetadataFields ||
     isLoadingAllowedStorageDrivers ||
-    isLoadingStorageDriver
+    isLoadingStorageDriver ||
+    isLoadingEffectiveStorageDriver
 
   const dataLoadingErrors = [
     metadataBlockInfoError,
@@ -184,7 +196,8 @@ export const EditCreateCollectionForm = ({
     collectionFacetsError,
     facetableMetadataFieldsError,
     allowedStorageDriversError,
-    storageDriverError
+    storageDriverError,
+    effectiveStorageDriverError
   ]
 
   useEffect(() => {
@@ -234,12 +247,19 @@ export const EditCreateCollectionForm = ({
   )
 
   const currentStorageDriverLabel = storageDriver?.label ?? storageDriver?.name
-  const defaultStorageDriver =
-    (currentStorageDriverLabel && allowedStorageDrivers[currentStorageDriverLabel] !== undefined
-      ? currentStorageDriverLabel
-      : undefined) ??
-    Object.keys(allowedStorageDrivers)[0] ??
-    ''
+  const effectiveStorageDriverLabel = effectiveStorageDriver?.label ?? effectiveStorageDriver?.name
+  const effectiveStorageDriverDisplayName =
+    effectiveStorageDriverLabel && allowedStorageDrivers[effectiveStorageDriverLabel] !== undefined
+      ? allowedStorageDrivers[effectiveStorageDriverLabel]
+      : effectiveStorageDriverLabel
+  const shouldUseInheritedOrDefaultStorageDriver = storageDriver === null
+  const defaultStorageDriver = shouldUseInheritedOrDefaultStorageDriver
+    ? ''
+    : (currentStorageDriverLabel && allowedStorageDrivers[currentStorageDriverLabel] !== undefined
+        ? currentStorageDriverLabel
+        : undefined) ??
+      Object.keys(allowedStorageDrivers)[0] ??
+      ''
 
   const formDefaultValues: CollectionFormData = {
     hostCollection: isEditingRootCollection
@@ -270,6 +290,8 @@ export const EditCreateCollectionForm = ({
       isEditingRootCollection={isEditingRootCollection}
       canSelectStorageDriver={canSelectStorageDriver}
       allowedStorageDrivers={allowedStorageDrivers}
+      showInheritedOrDefaultStorageDriverOption={shouldUseInheritedOrDefaultStorageDriver}
+      inheritedOrDefaultStorageDriverName={effectiveStorageDriverDisplayName}
     />
   )
 }
