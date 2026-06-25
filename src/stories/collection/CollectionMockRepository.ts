@@ -285,4 +285,12 @@ export class CollectionMockRepository implements CollectionRepository {
       }, FakerHelper.loadingTimout())
     })
   }
+
+  deleteStorageDriver(_collectionIdOrAlias: number | string): Promise<string> {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve('Storage driver deleted.')
+      }, FakerHelper.loadingTimout())
+    })
+  }
 }

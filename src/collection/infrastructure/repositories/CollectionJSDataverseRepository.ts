@@ -19,7 +19,8 @@ import {
   getCollectionLinks,
   getAllowedCollectionStorageDrivers,
   getCollectionStorageDriver,
-  setCollectionStorageDriver
+  setCollectionStorageDriver,
+  deleteCollectionStorageDriver
 } from '@iqss/dataverse-client-javascript'
 import { JSCollectionMapper } from '../mappers/JSCollectionMapper'
 import { CollectionDTO } from '../../domain/useCases/DTOs/CollectionDTO'
@@ -193,5 +194,9 @@ export class CollectionJSDataverseRepository implements CollectionRepository {
 
   setStorageDriver(collectionIdOrAlias: number | string, driverLabel: string): Promise<string> {
     return setCollectionStorageDriver.execute(collectionIdOrAlias, driverLabel)
+  }
+
+  deleteStorageDriver(collectionIdOrAlias: number | string): Promise<string> {
+    return deleteCollectionStorageDriver.execute(collectionIdOrAlias)
   }
 }

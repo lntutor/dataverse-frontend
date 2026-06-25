@@ -13,7 +13,6 @@ interface TopFieldsSectionProps {
   isEditingRootCollection: boolean
   canSelectStorageDriver: boolean
   allowedStorageDrivers: AllowedStorageDrivers
-  showInheritedOrDefaultStorageDriverOption: boolean
   inheritedOrDefaultStorageDriverName?: string
 }
 
@@ -21,7 +20,6 @@ export const TopFieldsSection = ({
   isEditingRootCollection,
   canSelectStorageDriver,
   allowedStorageDrivers,
-  showInheritedOrDefaultStorageDriverOption,
   inheritedOrDefaultStorageDriverName
 }: TopFieldsSectionProps) => {
   const { t } = useTranslation('shared', { keyPrefix: 'collectionForm' })
@@ -167,7 +165,6 @@ export const TopFieldsSection = ({
         {canSelectStorageDriver && (
           <StorageField
             allowedStorageDrivers={allowedStorageDrivers}
-            showInheritedOrDefaultStorageDriverOption={showInheritedOrDefaultStorageDriverOption}
             inheritedOrDefaultStorageDriverName={inheritedOrDefaultStorageDriverName}
           />
         )}

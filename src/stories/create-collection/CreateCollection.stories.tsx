@@ -102,27 +102,6 @@ export const SuperUserWithStorageDriver: Story = {
   )
 }
 
-export const SuperUserWithInheritedOrDefaultStorageDriver: Story = {
-  render: () => (
-    <SessionContext.Provider
-      value={{
-        user: UserMother.createSuperUser(),
-        setUser: () => {},
-        isLoadingUser: false,
-        sessionError: null,
-        refetchUserSession: () => Promise.resolve()
-      }}>
-      <RepositoriesStoryProvider
-        collectionRepository={collectionRepositoryWithInheritedStorageDriver}>
-        <CreateCollection
-          parentCollectionId={ROOT_COLLECTION_ALIAS}
-          metadataBlockInfoRepository={new MetadataBlockInfoMockRepository()}
-        />
-      </RepositoriesStoryProvider>
-    </SessionContext.Provider>
-  )
-}
-
 export const Loading: Story = {
   decorators: [WithRepositories({ collectionRepository: new CollectionLoadingMockRepository() })],
   render: () => (

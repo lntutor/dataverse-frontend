@@ -252,14 +252,14 @@ export const EditCreateCollectionForm = ({
     effectiveStorageDriverLabel && allowedStorageDrivers[effectiveStorageDriverLabel] !== undefined
       ? allowedStorageDrivers[effectiveStorageDriverLabel]
       : effectiveStorageDriverLabel
-  const shouldUseInheritedOrDefaultStorageDriver = storageDriver === null
-  const defaultStorageDriver = shouldUseInheritedOrDefaultStorageDriver
-    ? ''
-    : (currentStorageDriverLabel && allowedStorageDrivers[currentStorageDriverLabel] !== undefined
-        ? currentStorageDriverLabel
-        : undefined) ??
-      Object.keys(allowedStorageDrivers)[0] ??
-      ''
+  const defaultStorageDriver =
+    storageDriver === null
+      ? ''
+      : (currentStorageDriverLabel && allowedStorageDrivers[currentStorageDriverLabel] !== undefined
+          ? currentStorageDriverLabel
+          : undefined) ??
+        Object.keys(allowedStorageDrivers)[0] ??
+        ''
 
   const formDefaultValues: CollectionFormData = {
     hostCollection: isEditingRootCollection
@@ -290,7 +290,6 @@ export const EditCreateCollectionForm = ({
       isEditingRootCollection={isEditingRootCollection}
       canSelectStorageDriver={canSelectStorageDriver}
       allowedStorageDrivers={allowedStorageDrivers}
-      showInheritedOrDefaultStorageDriverOption={shouldUseInheritedOrDefaultStorageDriver}
       inheritedOrDefaultStorageDriverName={effectiveStorageDriverDisplayName}
     />
   )

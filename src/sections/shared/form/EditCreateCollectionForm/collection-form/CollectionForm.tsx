@@ -29,7 +29,6 @@ export interface CollectionFormProps {
   isEditingRootCollection: boolean
   canSelectStorageDriver: boolean
   allowedStorageDrivers: AllowedStorageDrivers
-  showInheritedOrDefaultStorageDriverOption: boolean
   inheritedOrDefaultStorageDriverName?: string
 }
 
@@ -43,7 +42,6 @@ export const CollectionForm = ({
   isEditingRootCollection,
   canSelectStorageDriver,
   allowedStorageDrivers,
-  showInheritedOrDefaultStorageDriverOption,
   inheritedOrDefaultStorageDriverName
 }: CollectionFormProps) => {
   const { collectionRepository } = useCollectionRepositories()
@@ -106,7 +104,6 @@ export const CollectionForm = ({
             isEditingRootCollection={isEditingRootCollection}
             canSelectStorageDriver={canSelectStorageDriver}
             allowedStorageDrivers={allowedStorageDrivers}
-            showInheritedOrDefaultStorageDriverOption={showInheritedOrDefaultStorageDriverOption}
             inheritedOrDefaultStorageDriverName={inheritedOrDefaultStorageDriverName}
           />
 

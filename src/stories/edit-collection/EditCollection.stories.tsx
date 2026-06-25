@@ -73,7 +73,7 @@ export const Default: Story = {
   }
 }
 
-export const SuperUserWithInheritedOrDefaultStorageDriver: Story = {
+export const SuperUserWithStorageDriver: Story = {
   render: () => {
     const collectionRepo = createScienceCollectionRepository()
     collectionRepo.getAllowedStorageDrivers = () => {

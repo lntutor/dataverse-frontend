@@ -20,6 +20,7 @@ import { CollectionDTO } from '@/collection/domain/useCases/DTOs/CollectionDTO'
 import { createCollection } from '@/collection/domain/useCases/createCollection'
 import { editCollection } from '@/collection/domain/useCases/editCollection'
 import { setCollectionDriver } from '@/collection/domain/useCases/setCollectionDriver'
+import { deleteCollectionDriver } from '@/collection/domain/useCases/deleteCollectionDriver'
 import { RouteWithParams } from '@/sections/Route.enum'
 import { JSDataverseWriteErrorHandler } from '@/shared/helpers/JSDataverseWriteErrorHandler'
 import { CollectionFormHelper } from '../CollectionFormHelper'
@@ -103,12 +104,21 @@ export function useSubmitCollection(
       inheritFacetsFromParent: useFacetsFromParentChecked
     }
 
-    const shouldSetStorageDriver =
-      canSelectStorageDriver && Boolean(formData.storage) && Boolean(dirtyFields.storage)
+    const shouldUpdateStorageDriver = canSelectStorageDriver && Boolean(dirtyFields.storage)
 
-    const setSelectedStorageDriver = (collectionIdOrAlias: number | string): Promise<void> => {
-      if (!shouldSetStorageDriver) {
+    const updateSelectedStorageDriver = (collectionIdOrAlias: number | string): Promise<void> => {
+      if (!shouldUpdateStorageDriver) {
         return Promise.resolve()
+      }
+
+      if (!formData.storage) {
+        if (mode === 'create') {
+          return Promise.resolve()
+        }
+
+        return deleteCollectionDriver(collectionRepository, collectionIdOrAlias).then(
+          () => undefined
+        )
       }
 
       return setCollectionDriver(collectionRepository, collectionIdOrAlias, formData.storage).then(
@@ -124,7 +134,7 @@ export function useSubmitCollection(
       )
         .then(async (newCollectionIdentifier) => {
           try {
-            await setSelectedStorageDriver(newCollectionIdentifier)
+            await updateSelectedStorageDriver(newCollectionIdentifier)
           } catch {
             toast.error(t('storageDriverUpdateFailed'))
           }
@@ -147,7 +157,7 @@ export function useSubmitCollection(
         })
     } else {
       editCollection(collectionRepository, newOrUpdatedCollection, collectionIdOrParentCollectionId)
-        .then(() => setSelectedStorageDriver(collectionIdOrParentCollectionId))
+        .then(() => updateSelectedStorageDriver(collectionIdOrParentCollectionId))
         .then(() => {
           setSubmitError(null)
           setSubmissionStatus(SubmissionStatus.SubmitComplete)
