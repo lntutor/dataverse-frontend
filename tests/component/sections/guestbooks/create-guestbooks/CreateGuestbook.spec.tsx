@@ -85,7 +85,7 @@ describe('CreateGuestbook', () => {
 
     expectGuestbookCreatedWith({
       name: 'Research Use Guestbook',
-      enabled: false,
+      enabled: true,
       nameRequired: false,
       emailRequired: false,
       institutionRequired: false,
@@ -133,7 +133,7 @@ describe('CreateGuestbook', () => {
 
     expectGuestbookCreatedWith({
       name: 'Research Use Guestbook',
-      enabled: false,
+      enabled: true,
       nameRequired: true,
       emailRequired: false,
       institutionRequired: true,

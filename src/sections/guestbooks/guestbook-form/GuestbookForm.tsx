@@ -148,7 +148,7 @@ export const GuestbookForm = ({
   const buildGuestbookDTO = (): GuestbookDTO => ({
     ...(initialGuestbook?.id !== undefined ? { id: initialGuestbook.id } : {}),
     name: guestbookName.trim(),
-    enabled: initialGuestbook?.enabled ?? false,
+    enabled: initialGuestbook?.enabled ?? true,
     nameRequired,
     emailRequired,
     institutionRequired,
