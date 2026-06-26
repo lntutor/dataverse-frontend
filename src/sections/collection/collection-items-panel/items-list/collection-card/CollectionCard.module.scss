@@ -19,6 +19,8 @@
 
   a {
     @include link-hover-underlined;
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
 
   .affiliation {
@@ -80,6 +82,8 @@
 
   a {
     @include link-hover-underlined;
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
 
   .description {
