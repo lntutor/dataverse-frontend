@@ -8,6 +8,7 @@ interface GuestbookActionButtonsProps {
   isEnabled: boolean
   onView: () => void
   onToggleEnabled: () => void
+  onCopy?: () => void
   onEdit?: () => void
   onViewResponses?: () => void
   canToggleEnabled?: boolean
@@ -23,6 +24,7 @@ export const GuestbookActionButtons = ({
   isEnabled,
   onView,
   onToggleEnabled,
+  onCopy,
   onEdit,
   onViewResponses,
   canToggleEnabled = true,
@@ -55,21 +57,13 @@ export const GuestbookActionButtons = ({
           </Button>
         </Tooltip>
         <Tooltip placement="top" overlay={t('actions.copy')}>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setShowNotImplementedModal(true)}
-            aria-label={t('actions.copy')}>
+          <Button variant="secondary" size="sm" onClick={onCopy} aria-label={t('actions.copy')}>
             <Files />
           </Button>
         </Tooltip>
         {canEdit && (
           <Tooltip placement="top" overlay={t('actions.edit')}>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={onEdit ?? (() => setShowNotImplementedModal(true))}
-              aria-label={t('actions.edit')}>
+            <Button variant="secondary" size="sm" onClick={onEdit} aria-label={t('actions.edit')}>
               <Pencil />
             </Button>
           </Tooltip>
@@ -99,7 +93,7 @@ export const GuestbookActionButtons = ({
         <Button
           variant="secondary"
           size="sm"
-          onClick={onViewResponses ?? (() => setShowNotImplementedModal(true))}
+          onClick={onViewResponses}
           aria-label={t('actions.viewResponses')}>
           {t('actions.viewResponses')}
         </Button>

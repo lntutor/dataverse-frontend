@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button, Col, Form, Row } from '@iqss/dataverse-design-system'
 import { DashLg, PlusLg } from 'react-bootstrap-icons'
-import { Guestbook, GuestbookQuestionType } from '@/guestbooks/domain/models/Guestbook'
+import { GuestbookQuestionType } from '@/guestbooks/domain/models/Guestbook'
 import { GuestbookDTO } from '@/guestbooks/domain/useCases/DTOs/GuestbookDTO'
 import styles from '../create-guestbooks/CreateGuestbook.module.scss'
 
 interface GuestbookFormProps {
-  initialGuestbook?: Guestbook
+  initialGuestbook?: GuestbookDTO
   isSubmitting: boolean
   submitButtonText: string
   cancelButtonText: string
@@ -39,7 +39,7 @@ const createEmptyQuestion = (draftId: number): CustomQuestionDraft => ({
   responseOptions: [{ value: '' }]
 })
 
-const getInitialQuestions = (guestbook?: Guestbook): CustomQuestionDraft[] => {
+const getInitialQuestions = (guestbook?: GuestbookDTO): CustomQuestionDraft[] => {
   const customQuestions = guestbook?.customQuestions ?? []
 
   if (customQuestions.length === 0) {

@@ -31,6 +31,7 @@ const GuestbookActionButtonsTestWrapper = ({
   isTogglingEnabled = false,
   isDownloadingResponses = false,
   onToggleEnabled = () => {},
+  onCopy,
   onEdit,
   onViewResponses,
   onDownloadResponses = () => {}
@@ -41,6 +42,7 @@ const GuestbookActionButtonsTestWrapper = ({
   isTogglingEnabled?: boolean
   isDownloadingResponses?: boolean
   onToggleEnabled?: () => void
+  onCopy?: () => void
   onEdit?: () => void
   onViewResponses?: () => void
   onDownloadResponses?: () => void
@@ -53,6 +55,7 @@ const GuestbookActionButtonsTestWrapper = ({
         isEnabled={isEnabled}
         onView={() => setShowPreview(true)}
         onToggleEnabled={onToggleEnabled}
+        onCopy={onCopy}
         onEdit={onEdit}
         onViewResponses={onViewResponses}
         canToggleEnabled={canToggleEnabled}
@@ -159,6 +162,15 @@ describe('GuestbookActionButtons', () => {
     cy.get('@onEdit').should('have.been.calledOnce')
   })
 
+  it('triggers copy handler when supplied', () => {
+    const onCopy = cy.stub().as('onCopy')
+
+    cy.customMount(<GuestbookActionButtonsTestWrapper onCopy={onCopy} />)
+
+    cy.findByRole('button', { name: 'Copy' }).click()
+    cy.get('@onCopy').should('have.been.calledOnce')
+  })
+
   it('triggers view responses handler when supplied', () => {
     const onViewResponses = cy.stub().as('onViewResponses')
 
@@ -186,24 +198,6 @@ describe('GuestbookActionButtons', () => {
 
     cy.get('@onToggleEnabled').should('have.been.calledOnce')
     cy.get('@onDownloadResponses').should('have.been.calledOnce')
-  })
-
-  it('opens the not implemented modal from copy, edit, and view responses buttons', () => {
-    cy.customMount(<GuestbookActionButtonsTestWrapper />)
-
-    cy.findByRole('button', { name: 'Copy' }).click()
-    cy.findByText('Not Implemented').should('exist')
-    cy.findByText(/This feature is not implemented yet in the Modern version./i).should('exist')
-    cy.findByText('Close').click()
-    cy.findByText('Not Implemented').should('not.exist')
-
-    cy.findByRole('button', { name: 'Edit' }).click()
-    cy.findByText('Not Implemented').should('exist')
-    cy.findByText('Close').click()
-    cy.findByText('Not Implemented').should('not.exist')
-
-    cy.findByRole('button', { name: 'View Responses' }).click()
-    cy.findByText('Not Implemented').should('exist')
   })
 
   it('opens the not implemented modal from the disabled guestbook delete button', () => {

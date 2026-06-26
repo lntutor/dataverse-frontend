@@ -377,6 +377,11 @@ export const Guestbooks = ({ collectionRepository, collectionId }: GuestbooksPro
                   <GuestbookActionButtons
                     isEnabled={guestbook.enabled}
                     onView={() => setGuestbookToPreview(guestbook)}
+                    onCopy={() =>
+                      navigate(RouteWithParams.GUESTBOOKS_CREATE(collectionId), {
+                        state: { guestbookToCopy: guestbook }
+                      })
+                    }
                     onEdit={() =>
                       navigate(RouteWithParams.GUESTBOOKS_EDIT(collectionId, guestbook.id))
                     }

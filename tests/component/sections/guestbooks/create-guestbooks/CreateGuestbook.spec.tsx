@@ -6,6 +6,7 @@ import { CreateGuestbookButton } from '@/sections/guestbooks/create-guestbooks/C
 import { useCreateGuestbook } from '@/sections/guestbooks/create-guestbooks/useCreateGuestbook'
 import { GuestbookRepositoryProvider } from '@/sections/guestbooks/GuestbookRepositoryProvider'
 import { CollectionRepository } from '@/collection/domain/repositories/CollectionRepository'
+import { Guestbook } from '@/guestbooks/domain/models/Guestbook'
 import { GuestbookRepository } from '@/guestbooks/domain/repositories/GuestbookRepository'
 import { GuestbookDTO } from '@/guestbooks/domain/useCases/DTOs/GuestbookDTO'
 import { CollectionMother } from '@tests/component/collection/domain/models/CollectionMother'
@@ -34,6 +35,32 @@ const guestbook: GuestbookDTO = {
   ]
 }
 
+const sourceGuestbookToCopy: Guestbook = {
+  id: 10,
+  name: 'Source Guestbook',
+  enabled: false,
+  emailRequired: true,
+  nameRequired: true,
+  institutionRequired: true,
+  positionRequired: false,
+  customQuestions: [
+    {
+      id: 21,
+      question: 'Preferred format',
+      required: true,
+      displayOrder: 0,
+      type: 'options',
+      hidden: false,
+      optionValues: [
+        { id: 31, value: 'CSV', displayOrder: 0 },
+        { id: 32, value: 'JSON', displayOrder: 1 }
+      ]
+    }
+  ],
+  createTime: '2026-01-01T00:00:00.000Z',
+  dataverseId: 17
+}
+
 describe('CreateGuestbook', () => {
   const collectionRepository = {} as CollectionRepository
   let guestbookRepository: GuestbookRepository
@@ -57,6 +84,13 @@ describe('CreateGuestbook', () => {
         <CreateGuestbook collectionId="root" collectionRepository={collectionRepository} />
       </GuestbookRepositoryProvider>
     )
+  const mountCopyGuestbook = () =>
+    cy.customMount(
+      <GuestbookRepositoryProvider repository={guestbookRepository}>
+        <CreateGuestbook collectionId="root" collectionRepository={collectionRepository} />
+      </GuestbookRepositoryProvider>,
+      [{ pathname: '/root/guestbooks/create', state: { guestbookToCopy: sourceGuestbookToCopy } }]
+    )
 
   const expectGuestbookCreatedWith = (expectedGuestbook: GuestbookDTO) => {
     cy.wrap(null).should(() => {
@@ -67,6 +101,59 @@ describe('CreateGuestbook', () => {
       expect(createGuestbookCall.args[1]).to.deep.equal(expectedGuestbook)
     })
   }
+
+  it('creates guestbooks as enabled by default', () => {
+    mountCreateGuestbook()
+
+    cy.get('#guestbook-name').type('Enabled By Default Guestbook')
+    cy.get('button[type="submit"]').click()
+
+    cy.wrap(null).should(() => {
+      expect(createGuestbookStub).to.have.been.calledOnce
+      expect(createGuestbookStub.getCall(0).args[1].enabled).to.equal(true)
+    })
+  })
+
+  it('prefills a copied guestbook and submits it as a new guestbook', () => {
+    mountCopyGuestbook()
+
+    cy.findByDisplayValue('Copy of Source Guestbook').should('exist')
+    cy.findByLabelText('Name').should('be.checked')
+    cy.findByLabelText('Email').should('be.checked')
+    cy.findByLabelText('Institution').should('be.checked')
+    cy.findByLabelText('Position').should('not.be.checked')
+    cy.findByDisplayValue('Preferred format').should('exist')
+    cy.findByDisplayValue('CSV').should('exist')
+    cy.findByDisplayValue('JSON').should('exist')
+    cy.findByLabelText('Required field').should('be.checked')
+
+    cy.get('button[type="submit"]').click()
+    cy.wrap(guestbookRepository.getGuestbook as Cypress.Agent<sinon.SinonStub>).should(
+      'not.have.been.called'
+    )
+
+    expectGuestbookCreatedWith({
+      name: 'Copy of Source Guestbook',
+      enabled: false,
+      nameRequired: true,
+      emailRequired: true,
+      institutionRequired: true,
+      positionRequired: false,
+      customQuestions: [
+        {
+          question: 'Preferred format',
+          required: true,
+          displayOrder: 0,
+          type: 'options',
+          hidden: false,
+          optionValues: [
+            { value: 'CSV', displayOrder: 0 },
+            { value: 'JSON', displayOrder: 1 }
+          ]
+        }
+      ]
+    })
+  })
 
   it('submits a guestbook with single line and multiple line custom questions', () => {
     mountCreateGuestbook()

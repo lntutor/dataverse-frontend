@@ -1,8 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { Alert } from '@iqss/dataverse-design-system'
-import { type NavigateFunction, useNavigate } from 'react-router-dom'
+import { type NavigateFunction, useLocation, useNavigate } from 'react-router-dom'
 import { CollectionRepository } from '@/collection/domain/repositories/CollectionRepository'
+import { Guestbook } from '@/guestbooks/domain/models/Guestbook'
 import { GuestbookDTO } from '@/guestbooks/domain/useCases/DTOs/GuestbookDTO'
 import { RouteWithParams } from '@/sections/Route.enum'
 import { useCollection } from '@/sections/collection/useCollection'
@@ -19,12 +20,18 @@ interface CreateGuestbookProps {
   collectionRepository: CollectionRepository
 }
 
+interface CreateGuestbookLocationState {
+  guestbookToCopy?: Guestbook
+}
+
 export const CreateGuestbook = ({ collectionId, collectionRepository }: CreateGuestbookProps) => {
   const { t } = useTranslation('guestbooks')
   const navigate: NavigateFunction = useNavigate()
+  const location = useLocation()
   const guestbookRepository = useGuestbookRepository()
   const { setIsLoading } = useLoading()
   const { collection, isLoading } = useCollection(collectionRepository, collectionId)
+  const guestbookToCopy = (location.state as CreateGuestbookLocationState | null)?.guestbookToCopy
   const guestbooksGuideUrl =
     'https://guides.dataverse.org/en/latest/user/dataverse-management.html#dataset-guestbooks'
   const navigateToGuestbooks = () => navigate(RouteWithParams.GUESTBOOKS(collectionId))
@@ -34,6 +41,31 @@ export const CreateGuestbook = ({ collectionId, collectionRepository }: CreateGu
       collectionIdOrAlias: collectionId,
       onSuccessfulCreate: navigateToGuestbooks
     }
+  )
+  const initialGuestbook = useMemo(
+    () =>
+      guestbookToCopy
+        ? {
+            name: `Copy of ${guestbookToCopy.name}`,
+            enabled: guestbookToCopy.enabled,
+            emailRequired: guestbookToCopy.emailRequired,
+            nameRequired: guestbookToCopy.nameRequired,
+            institutionRequired: guestbookToCopy.institutionRequired,
+            positionRequired: guestbookToCopy.positionRequired,
+            customQuestions: guestbookToCopy.customQuestions.map((question, index) => ({
+              question: question.question,
+              required: question.required,
+              displayOrder: index,
+              type: question.type,
+              hidden: question.hidden,
+              optionValues: question.optionValues?.map((option, optionIndex) => ({
+                value: option.value,
+                displayOrder: optionIndex
+              }))
+            }))
+          }
+        : undefined,
+    [guestbookToCopy]
   )
 
   useEffect(() => {
@@ -82,6 +114,7 @@ export const CreateGuestbook = ({ collectionId, collectionRepository }: CreateGu
       {errorCreatingGuestbook && <Alert variant="danger">{errorCreatingGuestbook}</Alert>}
 
       <GuestbookForm
+        initialGuestbook={initialGuestbook}
         isSubmitting={isCreatingGuestbook}
         submitButtonText={t('create.submit')}
         cancelButtonText={t('create.cancel')}

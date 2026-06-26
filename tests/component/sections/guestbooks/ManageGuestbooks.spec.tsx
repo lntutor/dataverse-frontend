@@ -212,6 +212,14 @@ describe('ManageGuestbooks', () => {
     cy.findByTestId('location-display').should('have.text', '/17/guestbooks/10/responses')
   })
 
+  it('navigates to the create guestbook page from the copy action', () => {
+    mountComponent()
+
+    cy.contains('tbody tr', 'Downloadable Guestbook').findByRole('button', { name: 'Copy' }).click()
+
+    cy.findByTestId('location-display').should('have.text', '/17/guestbooks/create')
+  })
+
   it('sorts guestbooks by name and toggles sort direction on repeated clicks', () => {
     mountComponent()
 
