@@ -19,6 +19,7 @@
 
   a {
     @include link-hover-underlined;
+
     text-decoration: underline;
     text-underline-offset: 2px;
   }
@@ -82,6 +83,7 @@
 
   a {
     @include link-hover-underlined;
+
     text-decoration: underline;
     text-underline-offset: 2px;
   }
