@@ -1,7 +1,6 @@
 import { GuestbookQuestionType } from '../../models/Guestbook'
 
 export interface GuestbookDTO {
-  id?: number
   name: string
   enabled: boolean
   emailRequired: boolean
@@ -9,7 +8,7 @@ export interface GuestbookDTO {
   institutionRequired: boolean
   positionRequired: boolean
   createTime?: string
-  customQuestions: GuestbookCustomQuestionDTO[]
+  customQuestions?: GuestbookCustomQuestionDTO[]
 }
 
 export interface GuestbookCustomQuestionDTO {

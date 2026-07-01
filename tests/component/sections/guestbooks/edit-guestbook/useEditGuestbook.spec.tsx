@@ -7,8 +7,8 @@ import { GuestbookRepository } from '@/guestbooks/domain/repositories/GuestbookR
 import { GuestbookDTO } from '@/guestbooks/domain/useCases/DTOs/GuestbookDTO'
 import { useEditGuestbook } from '@/sections/guestbooks/edit-guestbook/useEditGuestbook'
 
+const guestbookId = 10
 const guestbook: GuestbookDTO = {
-  id: 10,
   name: 'Research Guestbook',
   enabled: true,
   emailRequired: true,
@@ -93,10 +93,10 @@ describe('useEditGuestbook', () => {
     const { result } = renderUseEditGuestbook()
 
     await act(async () => {
-      await result.current.handleEditGuestbook(guestbook.id as number, guestbook)
+      await result.current.handleEditGuestbook(guestbookId, guestbook)
     })
 
-    expect(editGuestbookStub).to.have.been.calledOnceWith(guestbook.id, guestbook)
+    expect(editGuestbookStub).to.have.been.calledOnceWith(guestbookId, guestbook)
     expect(onSuccessfulEdit).to.have.been.calledOnce
     expect(result.current.isEditingGuestbook).to.equal(false)
     expect(result.current.errorEditingGuestbook).to.equal(null)
@@ -110,7 +110,7 @@ describe('useEditGuestbook', () => {
     const { result } = renderUseEditGuestbook()
 
     await act(async () => {
-      await result.current.handleEditGuestbook(guestbook.id as number, guestbook)
+      await result.current.handleEditGuestbook(guestbookId, guestbook)
     })
 
     expect(onSuccessfulEdit).not.to.have.been.called
@@ -129,7 +129,7 @@ describe('useEditGuestbook', () => {
     const { result } = renderUseEditGuestbook()
 
     await act(async () => {
-      await result.current.handleEditGuestbook(guestbook.id as number, guestbook)
+      await result.current.handleEditGuestbook(guestbookId, guestbook)
     })
 
     expect(onSuccessfulEdit).not.to.have.been.called
@@ -143,7 +143,7 @@ describe('useEditGuestbook', () => {
     const { result } = renderUseEditGuestbook()
 
     await act(async () => {
-      await result.current.handleEditGuestbook(guestbook.id as number, guestbook)
+      await result.current.handleEditGuestbook(guestbookId, guestbook)
     })
 
     expect(onSuccessfulEdit).not.to.have.been.called
@@ -157,7 +157,7 @@ describe('useEditGuestbook', () => {
     const { result } = renderUseEditGuestbook()
 
     await act(async () => {
-      await result.current.handleEditGuestbook(guestbook.id as number, guestbook)
+      await result.current.handleEditGuestbook(guestbookId, guestbook)
     })
 
     expect(onSuccessfulEdit).not.to.have.been.called
