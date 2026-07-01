@@ -117,6 +117,12 @@
       "file": "File",
       "user": "User",
       "customQuestions": "Custom Questions"
+    },
+    "eventTypes": {
+      "AccessRequest": "Access Request",
+      "Download": "Download",
+      "Subset": "Subset",
+      "Explore": "Explore"
     }
   }
 }

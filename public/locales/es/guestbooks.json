@@ -117,6 +117,12 @@
       "file": "Fichero",
       "user": "Usuario",
       "customQuestions": "Preguntas personalizadas"
+    },
+    "eventTypes": {
+      "AccessRequest": "Solicitud de acceso",
+      "Download": "Descarga",
+      "Subset": "Subconjunto",
+      "Explore": "Explorar"
     }
   }
 }

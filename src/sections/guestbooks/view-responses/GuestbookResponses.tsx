@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { Alert, Button, Table } from '@iqss/dataverse-design-system'
 import { CaretDown, CaretUp, ChevronExpand, Download } from 'react-bootstrap-icons'
@@ -28,13 +28,6 @@ interface GuestbookResponsesProps {
 }
 
 type SortableColumn = 'dataset' | 'date' | 'type' | 'file' | 'user'
-
-const eventTypeLabels: Record<EventType, string> = {
-  [EventType.ACCESS_REQUEST]: 'Access Request',
-  [EventType.DOWNLOAD]: 'Download',
-  [EventType.SUBSET]: 'Subset',
-  [EventType.EXPLORE]: 'Explore'
-}
 
 const formatResponseDate = (date: string): string => new Date(date).toLocaleDateString()
 
@@ -80,6 +73,11 @@ export const GuestbookResponses = ({
     offset: paginationInfo.offset
   })
   const isLoadingData = isLoading || isLoadingGuestbook || isLoadingGuestbookResponses
+  const getEventTypeLabel = useCallback(
+    (eventType: EventType): string =>
+      t(`responses.eventTypes.${eventType}`, { defaultValue: eventType }),
+    [t]
+  )
 
   useEffect(() => {
     setIsLoading(isLoadingData)
@@ -118,7 +116,7 @@ export const GuestbookResponses = ({
     })
 
     return sortDirection === 'asc' ? sorted : sorted.reverse()
-  }, [guestbookResponses, sortBy, sortDirection])
+  }, [getEventTypeLabel, guestbookResponses, sortBy, sortDirection])
 
   const handleSort = (column: SortableColumn) => {
     if (sortBy === column) {
@@ -332,5 +330,3 @@ export const GuestbookResponses = ({
     </section>
   )
 }
-
-const getEventTypeLabel = (eventType: EventType): string => eventTypeLabels[eventType] ?? eventType
