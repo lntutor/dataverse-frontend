@@ -70,4 +70,56 @@ describe('useGetFileDownloadCount', () => {
       )
     })
   })
+
+  it('should clear stale error and download count before fetching again', () => {
+    let resolveSecondRequest: (downloadCount: number) => void = () => undefined
+    const secondRequest = new Promise<number>((resolve) => {
+      resolveSecondRequest = resolve
+    })
+
+    fileRepository.getFileDownloadCount = cy
+      .stub()
+      .onFirstCall()
+      .rejects(new Error('Error message'))
+      .onSecondCall()
+      .returns(secondRequest)
+
+    const { result, rerender } = renderHook(
+      ({ fileId }) =>
+        useGetFileDownloadCount({
+          fileRepository,
+          fileId
+        }),
+      {
+        initialProps: {
+          fileId: 1
+        }
+      }
+    )
+
+    cy.wrap(null).should(() => {
+      expect(result.current.isLoadingDownloadCount).to.deep.equal(false)
+      expect(result.current.downloadCount).to.deep.equal(null)
+      expect(result.current.errorLoadingDownloadCount).to.deep.equal(
+        'Something went wrong while getting the file download count. Try again later.'
+      )
+    })
+
+    cy.then(() => {
+      rerender({ fileId: 2 })
+
+      expect(result.current.isLoadingDownloadCount).to.deep.equal(true)
+      expect(result.current.downloadCount).to.deep.equal(null)
+      expect(result.current.errorLoadingDownloadCount).to.deep.equal(null)
+
+      resolveSecondRequest(4)
+    })
+
+    cy.wrap(null).should(() => {
+      expect(result.current.isLoadingDownloadCount).to.deep.equal(false)
+      expect(result.current.downloadCount).to.deep.equal(4)
+      expect(result.current.errorLoadingDownloadCount).to.deep.equal(null)
+      expect(fileRepository.getFileDownloadCount).to.have.been.calledWith(2)
+    })
+  })
 })

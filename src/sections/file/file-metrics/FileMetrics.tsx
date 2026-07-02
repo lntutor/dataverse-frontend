@@ -13,10 +13,7 @@ interface FileMetricsProps {
 export const FileMetrics = ({ fileRepository, fileId }: FileMetricsProps) => {
   const { t, i18n } = useTranslation('file')
   const { downloadCount, isLoadingDownloadCount, errorLoadingDownloadCount } =
-    useGetFileDownloadCount({
-      fileRepository,
-      fileId
-    })
+    useGetFileDownloadCount({ fileRepository, fileId })
 
   const count = downloadCount ?? 0
   const formatNumber = (value: number) =>
@@ -56,10 +53,10 @@ const FileMetricsSkeleton = () => (
   <SkeletonTheme>
     <div className={styles['file-metrics']} data-testid="file-metrics-skeleton">
       <div className={styles.title}>
-        <Skeleton height={18} width={95} />
+        <Skeleton height={18} width={100} />
       </div>
       <div className={styles.results}>
-        <Skeleton height={18} width={90} />
+        <Skeleton height={18} width={100} />
       </div>
     </div>
   </SkeletonTheme>

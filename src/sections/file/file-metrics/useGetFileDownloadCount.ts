@@ -26,6 +26,8 @@ export const useGetFileDownloadCount = ({
   useEffect(() => {
     const handleGetDownloadCount = async () => {
       setIsLoadingDownloadCount(true)
+      setErrorLoadingDownloadCount(null)
+      setDownloadCount(null)
 
       try {
         const res = await getFileDownloadCount(fileRepository, fileId)

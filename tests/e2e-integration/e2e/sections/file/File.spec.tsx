@@ -100,7 +100,6 @@ describe('File', () => {
           cy.get('@anchorClick').should('have.been.calledOnce')
           cy.findByText('Your download has started.').should('exist')
 
-          cy.wait(5000)
           cy.visit(`${FRONTEND_BASE_PATH}/files?id=${fileId}`)
           cy.findByTestId('file-download-count').should('contain.text', '1 Download')
         }
