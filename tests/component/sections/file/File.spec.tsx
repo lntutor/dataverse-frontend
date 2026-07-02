@@ -14,7 +14,11 @@ import { WithRepositories } from '@tests/component/WithRepositories'
 const fileRepository: FileRepository = {} as FileRepository
 
 describe('File', () => {
-  it('renders the File page title and details', () => {
+  beforeEach(() => {
+    fileRepository.getFileDownloadCount = cy.stub().resolves(8)
+  })
+
+  it('renders the File page title, details and metrics', () => {
     const testFile = FileMother.createRealistic()
     fileRepository.getById = cy.stub().resolves(testFile)
 
@@ -47,6 +51,9 @@ describe('File', () => {
     cy.findByRole('tab', { name: 'Versions' }).should('exist')
     cy.findByRole('button', { name: 'File Metadata' }).should('exist')
     cy.findByRole('group', { name: 'File Action Buttons' }).should('exist')
+    cy.findByText('File Metrics').should('exist')
+    cy.findByTestId('file-download-count').should('contain.text', '8 Downloads')
+    cy.wrap(fileRepository.getFileDownloadCount).should('be.calledWith', testFile.id)
   })
 
   it('renders skeleton while loading', () => {

@@ -33,6 +33,7 @@ export interface FileRepository {
     criteria?: FileCriteria,
     includeDeaccessioned?: boolean
   ) => Promise<number>
+  getFileDownloadCount: (fileId: number | string) => Promise<number>
   getFileVersionSummaries: (
     fileId: number | string,
     paginationInfo?: FileVersionPaginationInfo

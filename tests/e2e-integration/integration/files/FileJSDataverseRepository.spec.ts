@@ -35,6 +35,7 @@ import { File } from '../../../../src/files/domain/models/File'
 import { FileIngest, FileIngestStatus } from '../../../../src/files/domain/models/FileIngest'
 import { DateHelper } from '@/shared/helpers/DateHelper'
 import { FileMetadataDTO } from '@/files/domain/useCases/DTOs/FileMetadataDTO'
+import { getFileDownloadCount } from '@/files/domain/useCases/getFileDownloadCount'
 
 const DRAFT_PARAM = DatasetNonNumericVersion.DRAFT
 
@@ -932,6 +933,30 @@ describe('File JSDataverse Repository', () => {
       })
     })
   })
+
+  describe('getFileDownloadCount', () => {
+    it('gets zero downloads for a published file with no downloads by database id', async () => {
+      const datasetResponse = await DatasetHelper.createWithFileAndPublish(FileHelper.create())
+      if (!datasetResponse.file) throw new Error('File not found')
+
+      const downloadCount = await getFileDownloadCount(fileRepository, datasetResponse.file.id)
+
+      expect(downloadCount).to.deep.equal(0)
+    })
+
+    it('gets the download count by database id after the file has been downloaded', async () => {
+      const datasetResponse = await DatasetHelper.createWithFileAndPublish(FileHelper.create())
+      if (!datasetResponse.file) throw new Error('File not found')
+
+      await FileHelper.download(datasetResponse.file.id)
+      await TestsUtils.wait(5000) // Wait for the file download count to be updated
+
+      const downloadCountById = await getFileDownloadCount(fileRepository, datasetResponse.file.id)
+
+      expect(downloadCountById).to.deep.equal(1)
+    })
+  })
+
   describe('edit file metadata', () => {
     it('edits file metadata', async () => {
       const datasetResponse = await DatasetHelper.createWithFile(FileHelper.create())
