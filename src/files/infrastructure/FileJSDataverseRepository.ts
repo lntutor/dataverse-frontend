@@ -202,15 +202,6 @@ export class FileJSDataverseRepository implements FileRepository {
       : Promise.resolve(0)
   }
 
-  getFileDownloadCount(fileId: number | string): Promise<number> {
-    return getFileDownloadCount
-      .execute(fileId)
-      .then((downloadCount) => Number(downloadCount))
-      .catch((error: ReadError) => {
-        throw new Error(error.message)
-      })
-  }
-
   private static getAllThumbnails(jsFiles: JSFile[]): Promise<(string | undefined)[]> {
     return Promise.all(jsFiles.map((jsFile) => this.getThumbnailById(jsFile.id)))
   }

@@ -89,14 +89,6 @@ export class FileMockRepository implements FileRepository {
     return FileMetadataMother.createDownloadUrl()
   }
 
-  getFileDownloadCount(_fileId: number | string): Promise<number> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(0)
-      }, FakerHelper.loadingTimout())
-    })
-  }
-
   uploadFile(
     _datasetId: number | string,
     _file: FileHolder,
