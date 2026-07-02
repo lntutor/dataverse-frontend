@@ -188,7 +188,7 @@ export function File({
                   {!isDeaccessioned && <ShareFileButton />}
                 </ButtonGroup>
               </ButtonGroup>
-              <FileMetrics fileRepository={repository} fileId={file.id} />
+              <FileMetrics downloadCount={file.metadata.downloadCount} />
             </Col>
           </Row>
           <Tabs activeKey={activeTab} onSelect={handleTabSelect}>

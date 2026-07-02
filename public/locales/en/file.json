@@ -44,8 +44,7 @@
         "default_other": "{{formattedCount}} Downloads"
       },
       "defaultTip": "Total downloads for this file."
-    },
-    "defaultGetDownloadCountError": "Something went wrong while getting the file download count. Try again later."
+    }
   },
   "fileAccess": {
     "title": "File Access",

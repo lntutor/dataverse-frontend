@@ -44,8 +44,7 @@
         "default_other": "{{formattedCount}} Descargas"
       },
       "defaultTip": "Descargas totales de este archivo."
-    },
-    "defaultGetDownloadCountError": "Algo salió mal al obtener el recuento de descargas del archivo. Intenta nuevamente más tarde."
+    }
   },
   "fileAccess": {
     "title": "Acceso al archivo",

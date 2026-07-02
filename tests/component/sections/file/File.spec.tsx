@@ -10,16 +10,15 @@ import { DataverseInfoMockRepository } from '@/stories/shared-mock-repositories/
 import { ContactMockRepository } from '@/stories/shared-mock-repositories/contact/ContactMockRepository'
 import { DatasetVersionMother } from '@tests/component/dataset/domain/models/DatasetMother'
 import { WithRepositories } from '@tests/component/WithRepositories'
+import { FileMetadataMother } from '@tests/component/files/domain/models/FileMetadataMother'
 
 const fileRepository: FileRepository = {} as FileRepository
 
 describe('File', () => {
-  beforeEach(() => {
-    fileRepository.getFileDownloadCount = cy.stub().resolves(8)
-  })
-
   it('renders the File page title, details and metrics', () => {
-    const testFile = FileMother.createRealistic()
+    const testFile = FileMother.createRealistic({
+      metadata: FileMetadataMother.createDefault({ downloadCount: 8 })
+    })
     fileRepository.getById = cy.stub().resolves(testFile)
 
     cy.customMount(
@@ -53,29 +52,6 @@ describe('File', () => {
     cy.findByRole('group', { name: 'File Action Buttons' }).should('exist')
     cy.findByText('File Metrics').should('exist')
     cy.findByTestId('file-download-count').should('contain.text', '8 Downloads')
-    cy.wrap(fileRepository.getFileDownloadCount).should('be.calledWith', testFile.id)
-  })
-
-  it('does not render file metrics when the download count API returns an error', () => {
-    const testFile = FileMother.createRealistic()
-    fileRepository.getById = cy.stub().resolves(testFile)
-    fileRepository.getFileDownloadCount = cy.stub().rejects(new Error('Error loading metric'))
-
-    cy.customMount(
-      <WithRepositories datasetRepository={new DatasetMockRepository()}>
-        <File
-          repository={fileRepository}
-          id={19}
-          dataverseInfoRepository={new DataverseInfoMockRepository()}
-          contactRepository={new ContactMockRepository()}
-        />
-      </WithRepositories>
-    )
-
-    cy.findAllByText(testFile.name).should('exist')
-    cy.findByTestId('file-metrics-skeleton').should('not.exist')
-    cy.findByText('File Metrics').should('not.exist')
-    cy.findByTestId('file-download-count').should('not.exist')
   })
 
   it('renders skeleton while loading', () => {
