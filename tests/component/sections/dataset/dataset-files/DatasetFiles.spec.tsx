@@ -588,13 +588,14 @@ describe('DatasetFiles', () => {
         getNode: () => Promise.resolve(treePage)
       }
       cy.customMount(
-        <DatasetFiles
-          filesRepository={fileRepository}
-          datasetPersistentId={datasetPersistentId}
-          datasetVersion={datasetVersion}
-          datasetRepository={datasetRepository}
-          fileTreeRepository={fileTreeRepository}
-        />,
+        <WithRepositories datasetRepository={datasetRepository}>
+          <DatasetFiles
+            filesRepository={fileRepository}
+            datasetPersistentId={datasetPersistentId}
+            datasetVersion={datasetVersion}
+            fileTreeRepository={fileTreeRepository}
+          />
+        </WithRepositories>,
         ['/?view=tree']
       )
       cy.findByText('tree-file.txt').should('exist')
