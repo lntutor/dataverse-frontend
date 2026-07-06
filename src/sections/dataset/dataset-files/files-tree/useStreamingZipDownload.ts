@@ -118,6 +118,14 @@ export interface StreamingZipApi {
    */
   deferCurrentToEnd: () => void
   retryFailed: () => void
+  /**
+   * At the `awaiting-retry` gate: finish the zip WITHOUT a second pass.
+   * The recoverable failures are demoted to skipped, listed in
+   * manifest.txt, and the first-pass bytes are saved — the affirmative
+   * counterpart to `retryFailed`, so "Done" never silently discards a
+   * fully-streamed first pass.
+   */
+  finalizeRun: () => void
   cancel: () => void
   close: () => void
 }
@@ -169,7 +177,14 @@ export function useStreamingZipDownload(): StreamingZipApi {
   // Engine control: a single "decision" promise that the iterator
   // awaits when paused. The UI calls retryCurrent/skipCurrent/etc.
   // which resolve this promise with the requested action.
-  type Decision = 'retry' | 'skip' | 'skip-all' | 'defer-to-end' | 'retry-failed' | 'cancel'
+  type Decision =
+    | 'retry'
+    | 'skip'
+    | 'skip-all'
+    | 'defer-to-end'
+    | 'retry-failed'
+    | 'finalize'
+    | 'cancel'
   const decisionRef = useRef<ResolveBag<Decision> | null>(null)
   const cancelledRef = useRef(false)
 
@@ -224,6 +239,7 @@ export function useStreamingZipDownload(): StreamingZipApi {
   const skipAllFailures = useCallback(() => sendDecision('skip-all'), [sendDecision])
   const deferCurrentToEnd = useCallback(() => sendDecision('defer-to-end'), [sendDecision])
   const retryFailed = useCallback(() => sendDecision('retry-failed'), [sendDecision])
+  const finalizeRun = useCallback(() => sendDecision('finalize'), [sendDecision])
 
   const start = useCallback(
     (args: StartStreamingZipArgs) => {
@@ -414,9 +430,22 @@ export function useStreamingZipDownload(): StreamingZipApi {
         if (strategy === 'twopass' && stateRef.current.failedSoFar.length > 0) {
           update((prev) => ({ ...prev, status: 'awaiting-retry' }))
           const decision = await waitForDecision()
-          /* istanbul ignore if */
           if (decision === 'cancel') return
-          if (decision === 'retry-failed') {
+          if (decision === 'finalize') {
+            // Finish without a second pass: the recoverable failures
+            // become skips so manifest.txt keeps its contract of
+            // listing every omission, and the first-pass bytes save.
+            for (const f of stateRef.current.failedSoFar.filter((x) => x.recoverable)) {
+              skippedManifest.push({ ...f, recoverable: false })
+            }
+            update((prev) => ({
+              ...prev,
+              failedSoFar: prev.failedSoFar.map((f) =>
+                f.recoverable ? { ...f, recoverable: false } : f
+              ),
+              status: 'running'
+            }))
+          } else if (decision === 'retry-failed') {
             const recoverable = stateRef.current.failedSoFar.filter((f) => f.recoverable)
             // Reconstruct the file objects from the tail of `files`:
             const fileByPath = new Map(files.map((f) => [f.path, f]))
@@ -518,6 +547,7 @@ export function useStreamingZipDownload(): StreamingZipApi {
     retryCurrent,
     skipCurrent,
     skipAllFailures,
+    finalizeRun,
     deferCurrentToEnd,
     retryFailed,
     cancel,
@@ -628,6 +658,36 @@ function appendQueryParam(url: string, key: string, value: string): string {
  * the chunked stream — re-presign helps for "URL expired", not for
  * "access genuinely denied" or "S3 melted".
  */
+/**
+ * Strips the `Authorization` header from `init` when `url` lives on a
+ * different origin than `originalUrl`. Bearer-token embeds put the
+ * header in `fetchInit` for the Dataverse access endpoint, but chunked
+ * Range parts 2..N hit the cached POST-REDIRECT presigned S3 URL —
+ * and S3 rejects a request that carries both query-string signing and
+ * an Authorization header (and the header would force a CORS
+ * preflight the bucket may not answer).
+ */
+export function initForUrl(
+  url: string,
+  originalUrl: string,
+  init: RequestInit | undefined
+): RequestInit | undefined {
+  if (!init?.headers) return init
+  try {
+    if (
+      new URL(url, window.location.href).origin ===
+      new URL(originalUrl, window.location.href).origin
+    ) {
+      return init
+    }
+  } catch {
+    /* istanbul ignore next */ return init
+  }
+  const headers = new Headers(init.headers)
+  headers.delete('Authorization')
+  return { ...init, headers }
+}
+
 async function fetchPartWithRefresh(args: {
   cachedUrl: string
   originalUrl: string
@@ -640,7 +700,9 @@ async function fetchPartWithRefresh(args: {
     const response = await fetchWithRetries({
       url: args.cachedUrl,
       rangeHeader: args.rangeHeader,
-      fetchInit: args.fetchInit,
+      // cachedUrl is typically the post-redirect presigned S3 URL —
+      // never send the Dataverse bearer header cross-origin.
+      fetchInit: initForUrl(args.cachedUrl, args.originalUrl, args.fetchInit),
       retries: args.retries,
       delayMs: args.delayMs
     })

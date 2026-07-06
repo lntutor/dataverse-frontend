@@ -24,6 +24,7 @@ function makeApi(state: Partial<StreamingZipState>): StreamingZipApi {
     skipAllFailures: cy.stub().as('skipAllFailures'),
     deferCurrentToEnd: cy.stub().as('deferCurrentToEnd'),
     retryFailed: cy.stub().as('retryFailed'),
+    finalizeRun: cy.stub().as('finalizeRun'),
     cancel: cy.stub().as('cancel'),
     close: cy.stub().as('close')
   }
@@ -102,7 +103,7 @@ describe('FilesTreeDownloadTray', () => {
     cy.get('@skipAllFailures').should('have.been.calledOnce')
   })
 
-  it('shows the awaiting-retry block with Download missing files / Done buttons', () => {
+  it('shows the awaiting-retry block with Download missing files / Finish buttons', () => {
     const failed = [
       { path: 'a.txt', name: 'a.txt', size: 100, error: 'HTTP 500', recoverable: true },
       { path: 'b.txt', name: 'b.txt', size: 100, error: 'HTTP 500', recoverable: true }
@@ -121,8 +122,11 @@ describe('FilesTreeDownloadTray', () => {
     cy.findByRole('button', { name: /Download 2 missing file/i }).click()
     cy.get('@retryFailed').should('have.been.calledOnce')
 
-    cy.findByRole('button', { name: /^Done$/i }).click()
-    cy.then(() => expect(onClose).to.have.been.calledOnce)
+    // The affirmative footer action FINALIZES (saves the first-pass zip
+    // with a manifest) — it must not route to onClose, which cancels.
+    cy.findByRole('button', { name: /Finish without them/i }).click()
+    cy.get('@finalizeRun').should('have.been.calledOnce')
+    cy.then(() => expect(onClose).not.to.have.been.called)
   })
 
   it('shows the cancelled title and footer Close after a cancel', () => {

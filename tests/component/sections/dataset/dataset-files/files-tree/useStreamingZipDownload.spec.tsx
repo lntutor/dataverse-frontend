@@ -1,5 +1,8 @@
 import { useState } from 'react'
-import { useStreamingZipDownload } from '../../../../../../src/sections/dataset/dataset-files/files-tree/useStreamingZipDownload'
+import {
+  initForUrl,
+  useStreamingZipDownload
+} from '../../../../../../src/sections/dataset/dataset-files/files-tree/useStreamingZipDownload'
 import { FilesTreeDownloadTray } from '../../../../../../src/sections/dataset/dataset-files/files-tree/FilesTreeDownloadTray'
 import { FileTreeFile } from '../../../../../../src/files/domain/models/FileTreeItem'
 import { FileTreeFileMother } from '../../../../files/domain/models/FileTreeItemMother'
@@ -50,6 +53,9 @@ function StreamingZipHarness({
       </button>
       <button type="button" data-testid="harness-retry-current" onClick={() => api.retryCurrent()}>
         Spam Retry
+      </button>
+      <button type="button" data-testid="harness-finalize" onClick={() => api.finalizeRun()}>
+        Finalize
       </button>
       <FilesTreeDownloadTray
         api={api}
@@ -354,6 +360,44 @@ describe('useStreamingZipDownload + FilesTreeDownloadTray', () => {
       .should('not.contain', 'tray-open')
     cy.wait(100)
     cy.get('@anchorClick').should('not.have.been.called')
+  })
+
+  it('finalize at the awaiting-retry gate saves the first-pass zip with a manifest', () => {
+    const files: FileTreeFile[] = [
+      FileTreeFileMother.create({
+        id: 1,
+        name: 'a.txt',
+        path: 'a.txt',
+        size: 3,
+        downloadUrl: '/access/1'
+      }),
+      FileTreeFileMother.create({
+        id: 2,
+        name: 'gone.bin',
+        path: 'gone.bin',
+        size: 3,
+        downloadUrl: '/access/2'
+      })
+    ]
+
+    cy.customMount(<StreamingZipHarness files={files} zipName="finalize.zip" />)
+    installFetchHandler((input) => {
+      const url = String(input)
+      if (url.endsWith('/access/1')) return Promise.resolve(fakeResponseBody('AAA'))
+      return Promise.reject(new Error('gone'))
+    })
+
+    cy.findByTestId('harness-start').click()
+    cy.findByTestId('files-tree-download-tray-failure').should('be.visible')
+    cy.contains(/Skip & retry at end/i).click()
+    cy.findByTestId('files-tree-download-tray-twopass').should('be.visible')
+    // The tray overlay covers the harness button; force past the
+    // hit-test — we're driving the API, not the overlay.
+    cy.findByTestId('harness-finalize').click({ force: true })
+    // No second pass: the run completes, the deferred failure is demoted
+    // to a skip (visible in the title), and the zip actually saves.
+    cy.contains(/Download complete — 1 skipped/i).should('exist')
+    cy.get('@anchorClick').should('have.been.calledOnce')
   })
 
   it('closing the tray at the awaiting-retry gate cancels instead of leaking the decision', () => {
@@ -1208,5 +1252,34 @@ describe('useStreamingZipDownload + FilesTreeDownloadTray', () => {
     cy.contains(/Skip all remaining failures/i).click()
     // Both broken-* files end up skipped → manifest line in the title.
     cy.contains(/Download complete — 2 skipped/i).should('exist')
+  })
+})
+
+describe('initForUrl', () => {
+  const bearerInit: RequestInit = { headers: { Authorization: 'Bearer token-123' } }
+
+  it('keeps the init untouched for same-origin part URLs', () => {
+    const out = initForUrl(
+      '/api/access/datafile/1?gbrecs=true',
+      '/api/access/datafile/1',
+      bearerInit
+    )
+    expect(out).to.equal(bearerInit)
+  })
+
+  it('strips Authorization when the part URL is cross-origin (presigned S3)', () => {
+    const out = initForUrl(
+      'https://minio.example:9000/bucket/key?X-Amz-Signature=abc',
+      '/api/access/datafile/1',
+      bearerInit
+    )
+    expect(new Headers(out?.headers).has('Authorization')).to.equal(false)
+  })
+
+  it('passes through an init without headers', () => {
+    const out = initForUrl('https://minio.example:9000/k', '/api/access/datafile/1', {
+      credentials: 'same-origin'
+    })
+    expect(out).to.deep.equal({ credentials: 'same-origin' })
   })
 })

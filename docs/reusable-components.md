@@ -58,16 +58,18 @@ Reusable components are built by `vite.config.reusable-components.ts`. The outpu
 ```
 dist-reusable-components/
 └── reusable-components/
-    ├── dv-uploader.js                   # entry per component
+    ├── dv-tree-view.js                  # entry per component
+    ├── dv-uploader.js
     ├── chunks/
     │   ├── react-<hash>.js              # React + ReactDOM + scheduler
     │   ├── i18n-<hash>.js               # i18next + react-i18next + http-backend
     │   ├── vendor-<hash>.js             # other npm deps
-    │   └── dataverse-shared-<hash>.js   # shared SPA code (files, dataset, design-system)
-    └── assets/                          # fonts/images if any
+    │   ├── dataverse-shared-<hash>.js   # shared SPA code (files, dataset, design-system)
+    │   └── auth-<hash>.js               # standalone-shared auth (SDK init)
+    └── locales/                         # en/, es/ … JSON the bundles fetch at runtime
 ```
 
-The four shared chunks (`react`, `i18n`, `vendor`, `dataverse-shared`) are produced by the `manualChunks` rule in `vite.config.reusable-components.ts`. When you add a second component, both bundles share these chunks; the host page loads each shared chunk **once** even if it embeds multiple components.
+The shared chunks (`react`, `i18n`, `vendor`, `dataverse-shared`, plus small auto-split ones like `auth`) are produced by the `manualChunks` rule in `vite.config.reusable-components.ts` and Rollup's own splitting. When you add a second component, both bundles share these chunks; the host page loads each shared chunk **once** even if it embeds multiple components.
 
 To add a new component to the build, add another entry under `rollupOptions.input`:
 

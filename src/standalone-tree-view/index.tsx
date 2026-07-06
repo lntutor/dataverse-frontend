@@ -219,7 +219,7 @@ async function init(opts: { fromObserver?: boolean } = {}) {
   const mountConfig: MountConfig = {
     datasetPid: config.datasetPid,
     datasetVersionId: normaliseVersionId(config.datasetVersionId),
-    fileMetadataVersionId: config.datasetVersionId,
+    fileMetadataVersionId: jsfVersionId(config.datasetVersionId),
     fileMetadataPath: config.fileMetadataPath ?? '/file.xhtml'
   }
   const treeRepository = new FileTreeJSDataverseRepository()
@@ -287,6 +287,30 @@ function isValidSiteUrl(raw: string | undefined): boolean {
  * `[400] Illegal version identifier 'DRAFT'`. We normalise here so JSF
  * doesn't have to translate before populating `window.dvTreeViewConfig`.
  */
+/**
+ * The JSF-friendly counterpart of `normaliseVersionId`: the host may
+ * legitimately pass API tokens (`:draft`, `:latest`, …) per the config
+ * docs, but `file.xhtml` only understands `DRAFT` or a numeric version
+ * — an unrecognised value silently resolves to the first released
+ * version. Draft tokens map to `DRAFT`; latest tokens map to
+ * `undefined` so the link omits `&version=` and file.xhtml applies its
+ * own latest-released default; numeric versions pass through.
+ */
+function jsfVersionId(raw: string | undefined): string | undefined {
+  if (!raw) return undefined
+  const lower = raw.toLowerCase()
+  if (lower === ':draft' || lower === 'draft') return 'DRAFT'
+  if (
+    lower === ':latest' ||
+    lower === 'latest' ||
+    lower === ':latest-published' ||
+    lower === 'latest-published'
+  ) {
+    return undefined
+  }
+  return raw
+}
+
 function normaliseVersionId(raw: string | undefined): string {
   if (!raw) return ':latest'
   const lower = raw.toLowerCase()

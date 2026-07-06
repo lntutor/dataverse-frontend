@@ -157,7 +157,7 @@ describe('useFileTreeSelection', () => {
     expect(result.current.folderState(root, [subFolder])).to.equal('partial')
   })
 
-  it('totals.bytes ignores selected files that have not been registered with filesByPath', () => {
+  it('totals counts a selected path even when its file was never registered (bytes unknown)', () => {
     const { result } = renderHook(() => useFileTreeSelection())
     // toggleFile registers the file; if we never call toggleFile/registerFile
     // for a path, but it gets into selectedFilePaths via some other route…

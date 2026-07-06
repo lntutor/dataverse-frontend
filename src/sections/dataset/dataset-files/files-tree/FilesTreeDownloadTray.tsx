@@ -181,8 +181,14 @@ export function FilesTreeDownloadTray({ api, open, onClose }: FilesTreeDownloadT
                     count: state.failedSoFar.filter((f) => f.recoverable).length
                   })}
                 </Button>
-                <Button variant="link" size="sm" onClick={onClose}>
-                  {t('tree.download.tray.done', 'Done')}
+                <Button variant="link" size="sm" onClick={api.finalizeRun}>
+                  {/* Finalize, NOT close: the first pass is fully
+                      streamed, so this saves the zip with the missing
+                      files listed in manifest.txt. Routing this to
+                      onClose/cancel would silently discard everything
+                      streamed so far — the header × remains the
+                      explicit cancel. */}
+                  {t('tree.download.tray.finishWithout', 'Finish without them')}
                 </Button>
               </div>
             </div>

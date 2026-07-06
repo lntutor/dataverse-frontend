@@ -19,13 +19,25 @@ This changelog follows the principles of [Keep a Changelog](https://keepachangel
 
 ### Changed
 
-- Bumped `@iqss/dataverse-client-javascript` to `2.2.0-pr403.3d6f638` (GitHub Packages prerelease) to consume the new `listDatasetTreeNode` and `iterateDatasetTreeNode` use cases. The pinned hash also carries the `x-amz-tagging` default fix so older Dataverse releases without the matching server PR keep getting `dv-state=temp` from the client.
+- Bumped `@iqss/dataverse-client-javascript` to `2.2.0-pr403.f11ee66` (GitHub Packages prerelease of SDK PR #403 with current `develop` merged in) to consume the new `listDatasetTreeNode` / `iterateDatasetTreeNode` use cases plus the post-2.2.0 develop additions this branch now uses (`getDatasetReviews`, storage drivers, guestbooks). The pinned hash also carries the `x-amz-tagging` default fix so older Dataverse releases without the matching server PR keep getting `dv-state=temp` from the client.
+- Tree rows surface the server's new `retentionExpired` access state (fourth state after public/restricted/embargoed): translated labels via the new `tree.access.*` i18n keys, a danger-emphasis colour cue whose folder precedence follows the server contract (retention-expired wins), and mutually exclusive folder count buckets. The entire `tree` namespace is now also translated to Spanish.
+- The zip tray's awaiting-retry footer action finalizes the run ("Finish without them"): the first-pass bytes save with the missing files listed in `manifest.txt`. Previously the button closed the tray, which cancelled the run and silently discarded everything already streamed.
 - Streaming-zip download fetches now use `credentials: 'same-origin'` (previously `'include'`). Cookies still travel on the same-origin Dataverse hop, but are dropped on the cross-origin redirect to S3 — required for `Allow-Origin: *` buckets to accept the request.
 - Standalone bundles (`dv-tree-view`, `dv-uploader`) now mount inside a Shadow DOM root via `mountInShadowRoot`, isolating both directions from the host page's CSS context.
 - Component CSS that references `var(--bs-*)` Bootstrap-5 tokens carries hardcoded fallback values, so the bundle renders correctly on JSF hosts that don't define those custom properties.
 
 ### Fixed
 
+- Streaming-zip: closing the tray mid-run now cancels the engine instead of resurrecting cancelled runs (a truncated zip could previously save after Cancel + close) or leaking a suspended run when closed while paused.
+- Streaming-zip: files that fail both passes of a two-pass run are demoted into `manifest.txt` instead of silently vanishing from a run that ends "done"; the retry button counts only recoverable failures.
+- Streaming-zip: chunked Range parts no longer send the bearer `Authorization` header to cross-origin presigned S3 URLs (S3 rejects double authentication), and per-row download icons are disabled while a zip run is active so a second run can't race the first.
+- Tree: a failing "load more" page no longer auto-retries in a tight loop; the error row's Retry button is the recovery path.
+- Tree: a slow page response from a previous version/order selection can no longer overwrite the reset tree (stale responses are discarded by generation).
+- Tree: folders force-opened by the filter query now load their children instead of showing an eternal spinner.
+- Tree: a dataset/version-level 404 no longer permanently downgrades the session to the previews fallback — only the server's explicit "endpoint does not exist" response does.
+- Standalone tree-view: file links from a draft tree keep the JSF-friendly version form (`DRAFT`), and API-style tokens (`:draft`, `:latest`) are translated for `file.xhtml`; previously such links opened the released version.
+- Standalone bundles: `getBearerToken` returning null now falls through to the static `bearerToken`; the streaming-zip engine receives the bearer header via the new `downloadFetchInit` prop so restricted-file downloads work in bearer embeds.
+- Build: `build-reusable-components` now copies `locales/` inside the deployable `reusable-components/` tree, so the documented straight-copy deploy ships translations.
 - Successful Save in the SPA file uploader no longer re-engages the "Discard Uploaded Files?" leave modal. The post-save navigation effect was racing `useBlocker`'s predicate-update effect across a parent/child boundary; the fix colocates the navigate effect with `useBlocker` in the same component so React fires the predicate update before the navigation runs. The standalone uploader (which uses `beforeunload` instead of `useBlocker`) didn't reproduce the original symptom but uses the same colocated shape now.
 - Tree download/upload paths select an S3-compatible storage driver via the typed `storageDriver.type === 's3'` capability and the `directDownload` / `directUpload` flags, instead of the previous `s3*` name-prefix heuristic. Operator-renamed drivers (e.g. `minio1`) are now recognised correctly without depending on the driver id.
 - Tree DOM focus follows the keyboard's roving tabindex when the bundle is mounted inside a Shadow DOM (JSF embed): the focus-grab effect now resolves the active element via `el.getRootNode()` instead of `document.activeElement`, so the `:focus-visible` ring tracks Up/Down arrow keys across the host-page boundary.

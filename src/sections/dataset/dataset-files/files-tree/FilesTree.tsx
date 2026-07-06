@@ -174,7 +174,6 @@ export function FilesTree({
 
   useLayoutEffect(() => {
     /* istanbul ignore if */
-    /* istanbul ignore if */
     if (typeof window === 'undefined') {
       return
     }
@@ -653,7 +652,18 @@ export function FilesTree({
                     handleToggleSelectionFolder(item)
                   }
                 }}
-                onDownload={downloadsDisabled ? undefined : () => handleDownloadOne(item)}
+                onDownload={
+                  // Also gated on an active zip run: the engine is a
+                  // single instance, and a second start() would race
+                  // the first (shared cancelledRef/decisionRef, two
+                  // anchor clicks) — same condition the toolbar uses.
+                  downloadsDisabled ||
+                  streamingZipActive ||
+                  download.progress.status === 'enumerating' ||
+                  download.progress.status === 'requesting'
+                    ? undefined
+                    : () => handleDownloadOne(item)
+                }
                 datasetVersionNumber={datasetVersion.number}
                 buildFileMetadataUrl={buildFileMetadataUrl}
                 focused={absoluteIndex === focusedRowIndex}
