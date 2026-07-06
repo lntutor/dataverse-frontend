@@ -346,6 +346,79 @@ describe('useFileTree', () => {
     expect(auxCalls()).to.equal(1)
   })
 
+  it('discards a stale in-flight response after the version key changes', async () => {
+    const v1 = DatasetVersionMother.create({ number: new DatasetVersionNumber(1, 0) })
+    const v2 = DatasetVersionMother.create({ number: new DatasetVersionNumber(2, 0) })
+
+    const oldPage = FileTreePageMother.create({
+      path: '',
+      items: [FileTreeFileMother.create({ id: 1, name: 'old.txt', path: 'old.txt' })]
+    })
+    const newPage = FileTreePageMother.create({
+      path: '',
+      items: [FileTreeFileMother.create({ id: 2, name: 'new.txt', path: 'new.txt' })]
+    })
+
+    // First call (old version) hangs until we release it; later calls
+    // (new version) resolve immediately.
+    let releaseOld: ((p: typeof oldPage) => void) | undefined
+    let rejectStale: ((e: Error) => void) | undefined
+    let call = 0
+    const repo = {
+      getNode: () => {
+        call += 1
+        if (call === 1) {
+          return new Promise<typeof oldPage>((resolve) => {
+            releaseOld = resolve
+          })
+        }
+        if (call === 2) {
+          return Promise.resolve(newPage)
+        }
+        return new Promise<typeof oldPage>((_resolve, reject) => {
+          rejectStale = reject
+        })
+      }
+    }
+
+    const { result, rerender } = renderHook(
+      ({ version }) =>
+        useFileTree({
+          repository: repo,
+          datasetPersistentId: 'doi:test/AAA',
+          datasetVersion: version
+        }),
+      { initialProps: { version: v1 } }
+    )
+
+    // Switch versions while the old fetch is still in flight; the reset
+    // fires the new fetch (call 2) which resolves with the new items.
+    rerender({ version: v2 })
+    await waitFor(() =>
+      expect(result.current.rootNode.items.map((i) => i.path)).to.deep.equal(['new.txt'])
+    )
+
+    // The stale response now lands — it must NOT overwrite the new tree.
+    await act(async () => {
+      releaseOld?.(oldPage)
+      await Promise.resolve()
+    })
+    expect(result.current.rootNode.items.map((i) => i.path)).to.deep.equal(['new.txt'])
+
+    // Same for a stale REJECTION: trigger a third fetch under v2 via
+    // refresh of an unrelated folder, switch back to v1, then reject the
+    // stale promise — the error must not surface on the fresh tree.
+    act(() => {
+      void result.current.refresh('sub')
+    })
+    rerender({ version: v1 })
+    await act(async () => {
+      rejectStale?.(new Error('stale failure'))
+      await Promise.resolve()
+    })
+    expect(result.current.nodes.get('sub')?.error).to.equal(undefined)
+  })
+
   it('initialPath expands every ancestor', async () => {
     const rootPage = FileTreePageMother.create({
       path: '',

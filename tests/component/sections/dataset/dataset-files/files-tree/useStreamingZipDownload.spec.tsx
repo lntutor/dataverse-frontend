@@ -92,7 +92,9 @@ function installFetchHandler(handler: FetchHandler) {
     ;(win as unknown as { fetch: FetchHandler }).fetch = handler
     // Suppress the actual download trigger so cypress's runner doesn't
     // navigate when the engine clicks the synthetic anchor.
-    cy.stub(win.HTMLAnchorElement.prototype, 'click').callsFake(() => undefined)
+    cy.stub(win.HTMLAnchorElement.prototype, 'click')
+      .as('anchorClick')
+      .callsFake(() => undefined)
   })
 }
 
@@ -252,6 +254,106 @@ describe('useStreamingZipDownload + FilesTreeDownloadTray', () => {
     cy.then(() => {
       expect(flakyAttempts).to.equal(2)
     })
+  })
+
+  it('demotes a file that fails BOTH passes into the manifest instead of dropping it', () => {
+    const files: FileTreeFile[] = [
+      FileTreeFileMother.create({
+        id: 1,
+        name: 'a.txt',
+        path: 'a.txt',
+        size: 3,
+        downloadUrl: '/access/1'
+      }),
+      FileTreeFileMother.create({
+        id: 2,
+        name: 'cursed.bin',
+        path: 'cursed.bin',
+        size: 3,
+        downloadUrl: '/access/2'
+      })
+    ]
+
+    cy.customMount(<StreamingZipHarness files={files} zipName="twopass-cursed.zip" />)
+    installFetchHandler((input) => {
+      const url = String(input)
+      if (url.endsWith('/access/1')) return Promise.resolve(fakeResponseBody('AAA'))
+      // Fails in pass 1 AND in the pass-2 retry.
+      return Promise.reject(new Error('cursed network'))
+    })
+
+    cy.findByTestId('harness-start').click()
+    cy.findByTestId('files-tree-download-tray-failure').should('be.visible')
+    cy.contains(/Skip & retry at end/i).click()
+    cy.findByTestId('files-tree-download-tray-twopass').should('be.visible')
+    cy.contains(/Download 1 missing file/i).click()
+    // The second-pass survivor must surface as a skip — previously it
+    // vanished: run ended plain 'done' with the file absent from both
+    // the zip and manifest.txt.
+    cy.contains(/Download complete — 1 skipped/i).should('exist')
+  })
+
+  it('closing the tray mid-run cancels the engine and never saves a zip', () => {
+    const files: FileTreeFile[] = [
+      FileTreeFileMother.create({
+        id: 1,
+        name: 'slow.bin',
+        path: 'slow.bin',
+        size: 4,
+        downloadUrl: '/access/slow'
+      })
+    ]
+
+    cy.customMount(<StreamingZipHarness files={files} zipName="closed-midrun.zip" />)
+    let releaseFetch: ((r: Response) => void) | undefined
+    installFetchHandler(
+      () =>
+        new Promise<Response>((resolve) => {
+          releaseFetch = resolve
+        })
+    )
+
+    cy.findByTestId('harness-start').click()
+    cy.findByTestId('files-tree-download-tray').should('be.visible')
+    // Close while status is 'running' — the header × is always enabled.
+    cy.findByRole('button', { name: /close/i }).click()
+    // The tray element stays mounted; `open` only drives the slide-in
+    // class, so closing must drop it (and the engine state resets).
+    cy.findByTestId('files-tree-download-tray')
+      .invoke('attr', 'class')
+      .should('not.contain', 'tray-open')
+    // Let the in-flight fetch settle AFTER the close; the pre-save
+    // cancellation guard must still hold (close() no longer resets it),
+    // so no surprise download fires.
+    cy.then(() => releaseFetch?.(fakeResponseBody('DATA')))
+    cy.wait(100)
+    cy.get('@anchorClick').should('not.have.been.called')
+  })
+
+  it('closing the tray while paused resolves the pending decision as cancel', () => {
+    const files: FileTreeFile[] = [
+      FileTreeFileMother.create({
+        id: 1,
+        name: 'broken.bin',
+        path: 'broken.bin',
+        size: 3,
+        downloadUrl: '/access/broken'
+      })
+    ]
+
+    cy.customMount(<StreamingZipHarness files={files} zipName="closed-paused.zip" />)
+    installFetchHandler(() => Promise.reject(new Error('hard failure')))
+
+    cy.findByTestId('harness-start').click()
+    cy.findByTestId('files-tree-download-tray-failure').should('be.visible')
+    // Close during 'paused' — previously this nulled the decision promise
+    // without resolving it, leaking the suspended generator forever.
+    cy.findByRole('button', { name: /close/i }).click()
+    cy.findByTestId('files-tree-download-tray')
+      .invoke('attr', 'class')
+      .should('not.contain', 'tray-open')
+    cy.wait(100)
+    cy.get('@anchorClick').should('not.have.been.called')
   })
 
   it('cancels the run from the pause-on-fail dialog and reports cancelled state', () => {
