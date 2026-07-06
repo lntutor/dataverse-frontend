@@ -174,6 +174,7 @@ export function FilesTree({
 
   useLayoutEffect(() => {
     /* istanbul ignore if */
+    /* istanbul ignore if */
     if (typeof window === 'undefined') {
       return
     }

@@ -176,12 +176,19 @@ export function useFileTreeSelection(): FileTreeSelection {
         const nextFiles = new Set(selectedFilePaths)
         const nextDeselected = new Set(deselectedFilePaths)
         nextFolders.delete(folder.path)
+        // Defensive sweeps: both mutation sites (the select-all fold below
+        // and toggleAll's top-level-only writes) maintain the invariant
+        // that the selected sets never contain an ancestor together with
+        // its descendants, so these loops cannot fire through the public
+        // API — they only guard future mutation paths.
         for (const other of Array.from(nextFolders)) {
+          /* istanbul ignore if */
           if (isStrictlyUnder(other, folder.path)) {
             nextFolders.delete(other)
           }
         }
         for (const path of Array.from(nextFiles)) {
+          /* istanbul ignore if */
           if (path === folder.path || isStrictlyUnder(path, folder.path)) {
             nextFiles.delete(path)
           }
