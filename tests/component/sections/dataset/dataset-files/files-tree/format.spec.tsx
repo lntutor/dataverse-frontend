@@ -89,9 +89,7 @@ describe('folderAccessParts', () => {
   })
 
   it('lists each non-empty bucket with its count, in display order', () => {
-    expect(folderAccessParts({ restricted: 3 })).to.deep.equal([
-      { key: 'restricted', count: 3 }
-    ])
+    expect(folderAccessParts({ restricted: 3 })).to.deep.equal([{ key: 'restricted', count: 3 }])
     expect(folderAccessParts({ embargoed: 4 })).to.deep.equal([{ key: 'embargoed', count: 4 }])
     expect(folderAccessParts({ retentionExpired: 2 })).to.deep.equal([
       { key: 'retentionExpired', count: 2 }

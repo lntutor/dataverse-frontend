@@ -101,7 +101,14 @@ describe('JSFileTreeMapper.toFileTreeFolder', () => {
       type: FileTreeNodeType.FOLDER,
       name: 'mixed',
       path: 'mixed',
-      counts: { files: 5, folders: 1, bytes: 8192, restricted: 2, embargoed: 1, retentionExpired: 1 }
+      counts: {
+        files: 5,
+        folders: 1,
+        bytes: 8192,
+        restricted: 2,
+        embargoed: 1,
+        retentionExpired: 1
+      }
     }
     const out = JSFileTreeMapper.toFileTreeFolder(node)
     expect(out.type).to.equal(FileTreeItemType.FOLDER)
