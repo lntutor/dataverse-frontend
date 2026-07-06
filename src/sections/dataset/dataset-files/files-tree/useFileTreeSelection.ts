@@ -48,7 +48,12 @@ export interface FileTreeSelection {
    * row-checkbox semantics.
    */
   toggleAll: (topLevelItems: FileTreeItem[]) => void
-  filesById: Map<number, FileTreeFile>
+  /**
+   * Registry of every file the tree has rendered, keyed by path — the
+   * key every consumer actually looks up by (selection sets store
+   * paths). Registered by the host as rows become visible.
+   */
+  filesByPath: Map<string, FileTreeFile>
   registerFile: (file: FileTreeFile) => void
 }
 
@@ -67,13 +72,13 @@ export function useFileTreeSelection(): FileTreeSelection {
   const [selectedFilePaths, setSelectedFilePaths] = useState<Set<string>>(() => new Set())
   const [selectedFolderPaths, setSelectedFolderPaths] = useState<Set<string>>(() => new Set())
   const [deselectedFilePaths, setDeselectedFilePaths] = useState<Set<string>>(() => new Set())
-  const [filesById] = useState<Map<number, FileTreeFile>>(() => new Map())
+  const [filesByPath] = useState<Map<string, FileTreeFile>>(() => new Map())
 
   const registerFile = useCallback(
     (file: FileTreeFile) => {
-      filesById.set(file.id, file)
+      filesByPath.set(file.path, file)
     },
-    [filesById]
+    [filesByPath]
   )
 
   const isFileLogicallySelected = useCallback(
@@ -102,9 +107,7 @@ export function useFileTreeSelection(): FileTreeSelection {
 
       const knownFilesUnder = knownChildren.filter(
         (child): child is FileTreeFile =>
-          isFileTreeFile(child) &&
-          (child.path === `${folder.path}/${child.name}` ||
-            isStrictlyUnder(child.path, folder.path))
+          isFileTreeFile(child) && isStrictlyUnder(child.path, folder.path)
       )
 
       if (logicallySelected) {
@@ -129,24 +132,16 @@ export function useFileTreeSelection(): FileTreeSelection {
         knownFilesUnder.length > 0 &&
         knownFilesUnder.every((file) => isFileLogicallySelected(file.path))
 
-      // If we know about subfolders but none are logically selected and
-      // not every visited file is selected, the folder is partial.
-      if (allFilesSelected && !nestedFolderSelected) {
-        return 'all'
-      }
-      if (allFilesSelected && nestedFolderSelected) {
-        // descendant folder selection covers some unvisited paths;
-        // we cannot honestly call this 'all' so partial is correct.
-        return 'partial'
-      }
-      return 'partial'
+      // 'all' only when every visited file is selected AND no nested
+      // folder selection covers unvisited paths we cannot vouch for.
+      return allFilesSelected && !nestedFolderSelected ? 'all' : 'partial'
     },
     [deselectedFilePaths, isFileLogicallySelected, selectedFolderPaths]
   )
 
   const toggleFile = useCallback(
     (file: FileTreeFile) => {
-      filesById.set(file.id, file)
+      filesByPath.set(file.path, file)
       const ancestorSelected = hasSelectedAncestor(file.path, selectedFolderPaths)
       if (ancestorSelected) {
         const next = new Set(deselectedFilePaths)
@@ -166,7 +161,7 @@ export function useFileTreeSelection(): FileTreeSelection {
       }
       setSelectedFilePaths(next)
     },
-    [deselectedFilePaths, filesById, selectedFilePaths, selectedFolderPaths]
+    [deselectedFilePaths, filesByPath, selectedFilePaths, selectedFolderPaths]
   )
 
   const toggleFolder = useCallback(
@@ -268,7 +263,7 @@ export function useFileTreeSelection(): FileTreeSelection {
       const nextFolders = new Set<string>()
       for (const item of topLevelItems) {
         if (isFileTreeFile(item)) {
-          filesById.set(item.id, item)
+          filesByPath.set(item.path, item)
           nextFiles.add(item.path)
         } else {
           nextFolders.add(item.path)
@@ -278,14 +273,14 @@ export function useFileTreeSelection(): FileTreeSelection {
       setSelectedFolderPaths(nextFolders)
       setDeselectedFilePaths(new Set())
     },
-    [filesById, selectedFilePaths, selectedFolderPaths]
+    [filesByPath, selectedFilePaths, selectedFolderPaths]
   )
 
   const totals = useMemo<FileTreeSelectionTotals>(() => {
     let count = 0
     let bytes = 0
     for (const path of selectedFilePaths) {
-      const file = findFileByPath(filesById, path)
+      const file = filesByPath.get(path)
       count += 1
       if (file) {
         bytes += file.size
@@ -296,7 +291,7 @@ export function useFileTreeSelection(): FileTreeSelection {
       bytes,
       hasLogicalFolders: selectedFolderPaths.size > 0
     }
-  }, [filesById, selectedFilePaths, selectedFolderPaths.size])
+  }, [filesByPath, selectedFilePaths, selectedFolderPaths.size])
 
   return {
     selectedFilePaths,
@@ -309,7 +304,7 @@ export function useFileTreeSelection(): FileTreeSelection {
     toggleFolder,
     clear,
     toggleAll,
-    filesById,
+    filesByPath,
     registerFile
   }
 }
@@ -325,16 +320,4 @@ function collectKnownFilesUnder(
     }
   }
   return out
-}
-
-function findFileByPath(
-  filesById: Map<number, FileTreeFile>,
-  path: string
-): FileTreeFile | undefined {
-  for (const file of filesById.values()) {
-    if (file.path === path) {
-      return file
-    }
-  }
-  return undefined
 }

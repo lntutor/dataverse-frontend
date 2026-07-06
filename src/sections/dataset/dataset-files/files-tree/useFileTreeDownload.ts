@@ -78,7 +78,7 @@ export function useFileTreeDownload({
   const collectExplicitFiles = useCallback((): FileTreeFile[] => {
     const out: FileTreeFile[] = []
     for (const path of selection.selectedFilePaths) {
-      const file = lookupFile(selection.filesById, path)
+      const file = selection.filesByPath.get(path)
       if (file) {
         out.push(file)
       }
@@ -153,15 +153,6 @@ export function useFileTreeDownload({
   )
 
   return { progress, downloadSelection, downloadNode, reset }
-}
-
-function lookupFile(filesById: Map<number, FileTreeFile>, path: string): FileTreeFile | undefined {
-  for (const file of filesById.values()) {
-    if (file.path === path) {
-      return file
-    }
-  }
-  return undefined
 }
 
 function mergeFiles(

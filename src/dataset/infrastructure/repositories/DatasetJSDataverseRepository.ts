@@ -435,7 +435,24 @@ export class DatasetJSDataverseRepository implements DatasetRepository {
   }
 
   private async getStorageDriver(datasetId: number): Promise<DatasetStorageDriver | undefined> {
-    return getDatasetStorageDriver.execute(datasetId).catch(() => undefined)
+    return getDatasetStorageDriver
+      .execute(datasetId)
+      .then((driver) =>
+        driver
+          ? {
+              // The SDK model leaves these optional; the SPA's
+              // DatasetStorageDriver keeps them required so capability
+              // checks stay simple — default the blanks here, at the
+              // boundary.
+              name: driver.name ?? '',
+              type: driver.type ?? '',
+              label: driver.label ?? '',
+              directUpload: driver.directUpload ?? false,
+              directDownload: driver.directDownload ?? false
+            }
+          : undefined
+      )
+      .catch(() => undefined)
   }
 
   updateDatasetLicense(

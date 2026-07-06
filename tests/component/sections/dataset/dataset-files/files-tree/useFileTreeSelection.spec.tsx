@@ -157,7 +157,7 @@ describe('useFileTreeSelection', () => {
     expect(result.current.folderState(root, [subFolder])).to.equal('partial')
   })
 
-  it('totals.bytes ignores selected files that have not been registered with filesById', () => {
+  it('totals.bytes ignores selected files that have not been registered with filesByPath', () => {
     const { result } = renderHook(() => useFileTreeSelection())
     // toggleFile registers the file; if we never call toggleFile/registerFile
     // for a path, but it gets into selectedFilePaths via some other route…
@@ -166,7 +166,7 @@ describe('useFileTreeSelection', () => {
     // selecting a file then forgetting its registry entry would be
     // engineering-acrobatics; instead we cover the branch by inserting an
     // additional path indirectly via the public API: select fileA (registers),
-    // then call clear (which does NOT clear filesById). Re-toggling the same
+    // then call clear (which does NOT clear filesByPath). Re-toggling the same
     // file by another file with the same path but a different id leaves the
     // map without an entry for the orphan path. Since this is fiddly, we
     // exercise the simpler branch: find a registered file's bytes flow.
@@ -175,10 +175,10 @@ describe('useFileTreeSelection', () => {
     expect(result.current.totals.bytes).to.equal(fileA.size)
   })
 
-  it('registerFile populates filesById without altering selection state', () => {
+  it('registerFile populates filesByPath without altering selection state', () => {
     const { result } = renderHook(() => useFileTreeSelection())
     act(() => result.current.registerFile(fileTopLevel))
-    expect(result.current.filesById.get(fileTopLevel.id)).to.deep.equal(fileTopLevel)
+    expect(result.current.filesByPath.get(fileTopLevel.path)).to.deep.equal(fileTopLevel)
     expect(result.current.totals.count).to.equal(0)
   })
 
@@ -308,8 +308,8 @@ describe('useFileTreeSelection', () => {
     expect(result.current.selectedFolderPaths.has('data')).to.equal(true)
     expect(result.current.deselectedFilePaths.size).to.equal(0)
     // The mixed-input loop walks both branches: file items get registered into
-    // `filesById`, folder items only get their path added to the folder set.
-    expect(result.current.filesById.get(fileTopLevel.id)).to.deep.equal(fileTopLevel)
+    // `filesByPath`, folder items only get their path added to the folder set.
+    expect(result.current.filesByPath.get(fileTopLevel.path)).to.deep.equal(fileTopLevel)
   })
 
   it('toggleAll clears everything when something is already selected', () => {

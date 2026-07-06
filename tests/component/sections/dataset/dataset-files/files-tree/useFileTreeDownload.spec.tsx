@@ -33,7 +33,7 @@ class FakeRepo implements FileTreeRepository {
 /**
  * Build a FileTreeSelection literal for the hook's input. The hook only
  * reads `selectedFilePaths`, `selectedFolderPaths`, `deselectedFilePaths`,
- * and `filesById` from selection, so the rest can be no-ops.
+ * and `filesByPath` from selection, so the rest can be no-ops.
  */
 function selectionFixture(
   files: FileTreeFile[],
@@ -43,7 +43,7 @@ function selectionFixture(
     deselectedFilePaths?: string[]
   } = {}
 ): FileTreeSelection {
-  const filesById = new Map(files.map((f) => [f.id, f]))
+  const filesByPath = new Map(files.map((f) => [f.path, f]))
   const totals: FileTreeSelectionTotals = {
     count: 0,
     bytes: 0,
@@ -59,7 +59,7 @@ function selectionFixture(
     toggleFile: () => undefined,
     toggleFolder: () => undefined,
     clear: () => undefined,
-    filesById,
+    filesByPath,
     registerFile: () => undefined
   }
 }
@@ -394,7 +394,7 @@ describe('useFileTreeDownload', () => {
     expect(onDownloadFiles.callCount, 'no dispatch when enumeration is empty').to.equal(0)
   })
 
-  it('skips selectedFilePaths that are not present in filesById', async () => {
+  it('skips selectedFilePaths that are not present in filesByPath', async () => {
     const known = FileTreeFileMother.create({ id: 1, name: 'a.txt', path: 'a.txt' })
     const onDownloadFiles = cy.stub().resolves()
 
@@ -403,7 +403,7 @@ describe('useFileTreeDownload', () => {
         treeRepository: new FakeRepo({}),
         datasetPersistentId: 'doi:test/AAA',
         datasetVersion,
-        // Selection references a path that is missing from filesById,
+        // Selection references a path that is missing from filesByPath,
         // exercising lookupFile's `return undefined` fallback.
         selection: selectionFixture([known], {
           selectedFilePaths: ['ghost.txt']

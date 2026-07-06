@@ -34,7 +34,12 @@ export const storybookClientGuestbooks: JSDataverseGuestbook[] = [
     positionRequired: storybookGuestbook.positionRequired,
     createTime: storybookGuestbook.createTime,
     dataverseId: storybookGuestbook.dataverseId,
-    customQuestions: storybookGuestbook.customQuestions
+    // The SPA form model allows string ids for not-yet-persisted
+    // questions; the SDK wire model is number-only, so narrow here.
+    customQuestions: storybookGuestbook.customQuestions.map((q) => ({
+      ...q,
+      id: typeof q.id === 'number' ? q.id : undefined
+    }))
   }
 ]
 
