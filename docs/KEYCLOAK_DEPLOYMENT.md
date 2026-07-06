@@ -161,7 +161,7 @@ You can create a JSON file based on the following example file, replacing the va
   "enabled": true,
   "alwaysDisplayInConsole": false,
   "clientAuthenticatorType": "client-secret",
-  "redirectUris": ["https://<INSTALLATION_DOMAIN_NAME>/spa/*"],
+  "redirectUris": ["https://<INSTALLATION_DOMAIN_NAME>/modern/*"],
   "webOrigins": ["+"],
   "notBefore": 0,
   "bearerOnly": false,

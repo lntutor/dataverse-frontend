@@ -8,6 +8,8 @@ This changelog follows the principles of [Keep a Changelog](https://keepachangel
 
 ### Added
 
+- Dataset Templates UI integration, including create/edit flows, previews, and skeleton states.
+- Dataset Page: added a sidebar to show dataset reviews
 - DVWebloader V2: A standalone file uploader build that reuses React file upload components, supporting S3 direct uploads with configurable tagging.
 - Shared file upload hooks (`useFileUploadState`, `useFileUploadOperations`) for better code reuse between the main SPA and standalone uploader.
 - Lazy file tree view on the dataset Files tab (`#6691`). A new `FilesViewToggle` flips between the existing files table and a virtualised, lazily-loaded folder tree. The tree supports tri-state path-keyed selection, full WAI-ARIA tree keyboard navigation (`Up/Down/Left/Right/Home/End/Space/Enter`), and URL bookmarkability via `?view=tree&path=<folder>`.

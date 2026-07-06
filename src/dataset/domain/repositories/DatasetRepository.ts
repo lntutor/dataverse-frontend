@@ -12,6 +12,7 @@ import { DatasetLicenseUpdateRequest } from '../models/DatasetLicenseUpdateReque
 import { CollectionSummary } from '@/collection/domain/models/CollectionSummary'
 import { DatasetVersionPaginationInfo } from '../models/DatasetVersionPaginationInfo'
 import { DatasetUploadLimits } from '../models/DatasetUploadLimits'
+import { DatasetReview } from '../models/DatasetReview'
 
 export interface DatasetRepository {
   getByPersistentId: (
@@ -70,4 +71,5 @@ export interface DatasetRepository {
   unlink(datasetId: string | number, collectionIdOrAlias: string | number): Promise<void>
   getDatasetLinkedCollections: (datasetId: string | number) => Promise<CollectionSummary[]>
   getDatasetUploadLimits: (datasetId: string | number) => Promise<DatasetUploadLimits>
+  getDatasetReviews: (datasetId: string | number) => Promise<DatasetReview[]>
 }

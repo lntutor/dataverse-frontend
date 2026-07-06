@@ -15,7 +15,6 @@ import styles from './FileUploaderPanel.module.scss'
 
 interface FileUploaderPanelProps {
   fileRepository: FileRepository
-  datasetRepository: DatasetRepository
   datasetPersistentId: string
   referrer?: ReplaceFileReferrer
   fetchUploadLimits?: (
@@ -26,7 +25,6 @@ interface FileUploaderPanelProps {
 
 const FileUploaderPanel = ({
   fileRepository,
-  datasetRepository,
   datasetPersistentId,
   referrer,
   fetchUploadLimits
@@ -110,7 +108,6 @@ const FileUploaderPanel = ({
       </p>
       <FileUploaderPanelCore
         fileRepository={fileRepository}
-        datasetRepository={datasetRepository}
         datasetPersistentId={datasetPersistentId}
         fetchUploadLimits={fetchUploadLimits}
         onCancel={handleCancel}

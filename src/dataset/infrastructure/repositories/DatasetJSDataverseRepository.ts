@@ -46,7 +46,8 @@ import {
   updateTermsOfAccess,
   updateDatasetLicense,
   getDatasetUploadLimits,
-  getDatasetStorageDriver
+  getDatasetStorageDriver,
+  getDatasetReviews
 } from '@iqss/dataverse-client-javascript'
 import { JSDatasetMapper } from '../mappers/JSDatasetMapper'
 import { DatasetPaginationInfo } from '../../domain/models/DatasetPaginationInfo'
@@ -64,6 +65,7 @@ import { requireAppConfig } from '../../../config'
 import { JSDataverseReadErrorHandler } from '@/shared/helpers/JSDataverseReadErrorHandler'
 import { CollectionSummary } from '@/collection/domain/models/CollectionSummary'
 import { DatasetUploadLimits } from '@/dataset/domain/models/DatasetUploadLimits'
+import { DatasetReview } from '@/dataset/domain/models/DatasetReview'
 
 const includeDeaccessioned = true
 
@@ -468,5 +470,9 @@ export class DatasetJSDataverseRepository implements DatasetRepository {
 
   getDatasetUploadLimits(datasetId: string | number): Promise<DatasetUploadLimits> {
     return getDatasetUploadLimits.execute(datasetId)
+  }
+
+  getDatasetReviews(datasetId: string | number): Promise<DatasetReview[]> {
+    return getDatasetReviews.execute(datasetId)
   }
 }

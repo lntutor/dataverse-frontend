@@ -14,7 +14,6 @@ import { useObserveElementSize } from '../../../shared/hooks/useObserveElementSi
 import { FilesTableScrollable } from './files-table/FilesTableScrollable'
 import { FileCriteriaForm } from './file-criteria-form/FileCriteriaForm'
 import { FilesContext } from '@/sections/file/FilesContext'
-import { DatasetRepository } from '@/dataset/domain/repositories/DatasetRepository'
 import { FilesTree } from './files-tree/FilesTree'
 import { FilesViewToggle, FilesViewMode } from './files-view-toggle/FilesViewToggle'
 import { FileTreeRepository } from '@/files/domain/repositories/FileTreeRepository'
@@ -33,7 +32,6 @@ interface DatasetFilesScrollableProps {
   filesRepository: FileRepository
   datasetPersistentId: string
   datasetVersion: DatasetVersion
-  datasetRepository: DatasetRepository
   canUpdateDataset?: boolean
   fileTreeRepository?: FileTreeRepository
 }
@@ -45,7 +43,6 @@ export function DatasetFilesScrollable({
   datasetPersistentId,
   datasetVersion,
   canUpdateDataset,
-  datasetRepository,
   fileTreeRepository
 }: DatasetFilesScrollableProps) {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -85,7 +82,6 @@ export function DatasetFilesScrollable({
       filesRepository={filesRepository}
       datasetPersistentId={datasetPersistentId}
       datasetVersion={datasetVersion}
-      datasetRepository={datasetRepository}
       canUpdateDataset={canUpdateDataset}
       view={view}
       onChangeView={setView}
@@ -135,7 +131,6 @@ interface DatasetFilesScrollableTableViewProps {
   filesRepository: FileRepository
   datasetPersistentId: string
   datasetVersion: DatasetVersion
-  datasetRepository: DatasetRepository
   canUpdateDataset?: boolean
   view: FilesViewMode
   onChangeView: (view: FilesViewMode) => void
@@ -146,7 +141,6 @@ function DatasetFilesScrollableTableView({
   datasetPersistentId,
   datasetVersion,
   canUpdateDataset,
-  datasetRepository,
   view,
   onChangeView
 }: DatasetFilesScrollableTableViewProps) {
@@ -315,7 +309,6 @@ function DatasetFilesScrollableTableView({
             isEmptyFiles={isEmptyFiles}
             accumulatedCount={accumulatedCount}
             fileRepository={filesRepository}
-            datasetRepository={datasetRepository}
           />
         </FilesContext.Provider>
       </div>

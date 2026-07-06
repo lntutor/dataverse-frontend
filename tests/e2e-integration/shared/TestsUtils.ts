@@ -3,6 +3,7 @@ import { DataverseApiHelper } from './DataverseApiHelper'
 import { DataverseApiAuthMechanism } from '@iqss/dataverse-client-javascript/dist/core/infra/repositories/ApiConfig'
 import { DatasetHelper } from './datasets/DatasetHelper'
 import { requireAppConfig } from '@/config'
+import { FRONTEND_BASE_PATH } from './basePath'
 
 export class TestsUtils {
   static get DATAVERSE_BACKEND_URL(): string {
@@ -74,22 +75,28 @@ export class TestsUtils {
   }
 
   static finishSignUp() {
-    // The previous version did one synchronous `$body.find()` check and
-    // returned silently if the form wasn't there yet. On a slow CI the
-    // sign-up component's terms-of-use fetch can still be in flight at
-    // that moment — the URL has already advanced to /sign-up but
-    // `#termsAccepted` hasn't rendered. The silent return then leaves
-    // the URL stuck on /sign-up and the next assertion times out.
-    // Diagnostic CI run confirmed exactly this state: URL on /sign-up,
-    // DOM empty of all sign-up markers at the 1500 ms wait moment.
-    //
-    // Fix: branch on the URL (cy.url retries until it resolves) and,
-    // if we're on the sign-up page, wait up to 20 s for the checkbox
-    // to appear before checking it.
-    cy.url().then((currentUrl) => {
-      if (!currentUrl.includes('/sign-up')) return
-      cy.get('#termsAccepted', { timeout: 20_000 }).check({ force: true })
-      cy.findByRole('button', { name: 'Create Account' }).click()
-    })
+    cy.location({ timeout: 30_000 })
+      .should((location) => {
+        const isOnSignUpPage =
+          location.pathname === `${FRONTEND_BASE_PATH}/sign-up` &&
+          location.search.includes('validTokenButNotLinkedAccount=true')
+        const isAlreadySignedIn = [
+          `${FRONTEND_BASE_PATH}`,
+          `${FRONTEND_BASE_PATH}/collections`
+        ].includes(location.pathname)
+
+        expect(isOnSignUpPage || isAlreadySignedIn, `current location ${location.href}`).to.equal(
+          true
+        )
+      })
+      .then((location) => {
+        if (location.pathname !== `${FRONTEND_BASE_PATH}/sign-up`) {
+          return
+        }
+
+        cy.findByTestId('sign-up-page').should('be.visible')
+        cy.get('#termsAccepted').should('be.visible').check({ force: true })
+        cy.findByRole('button', { name: 'Create Account' }).should('be.enabled').click()
+      })
   }
 }

@@ -16,10 +16,10 @@ import { SwalModal } from '../../swal-modal/SwalModal'
 import { UploaderFileRepository } from '../types'
 import styles from './FileUploadInput.module.scss'
 import { useUploadLimit } from './useUploadLimit'
+import { useOptionalDatasetRepository } from '@/shared/contexts/repositories/RepositoriesProvider'
 
 type FileUploadInputProps = {
   fileRepository: UploaderFileRepository
-  datasetRepository?: DatasetRepository
   datasetPersistentId: string
   fetchUploadLimits?: (
     datasetId: string | number,
@@ -31,10 +31,13 @@ const maxFilesPerUpload = 1000
 
 const FileUploadInput = ({
   fileRepository,
-  datasetRepository,
   datasetPersistentId,
   fetchUploadLimits
 }: FileUploadInputProps) => {
+  // Optional on purpose: the standalone JSF bundle mounts this component
+  // without a RepositoriesProvider; no repository simply means upload
+  // limits are not fetched (the JSF page has no limits API context).
+  const datasetRepository = useOptionalDatasetRepository()
   const {
     fileUploaderState,
     addFile,

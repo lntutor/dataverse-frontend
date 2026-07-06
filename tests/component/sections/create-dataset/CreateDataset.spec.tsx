@@ -6,7 +6,7 @@ import { MetadataBlockInfoMother } from '../../metadata-block-info/domain/models
 import { NotImplementedModalProvider } from '../../../../src/sections/not-implemented/NotImplementedModalProvider'
 import { CollectionRepository } from '../../../../src/collection/domain/repositories/CollectionRepository'
 import { CollectionMother } from '../../collection/domain/models/CollectionMother'
-import { DatasetTemplateMother } from '@tests/component/dataset/domain/models/DatasetTemplateMother'
+import { TemplateMother } from '@tests/component/sections/templates/TemplateMother'
 import { WithRepositories } from '@tests/component/WithRepositories'
 
 const datasetRepository: DatasetRepository = {} as DatasetRepository
@@ -27,7 +27,11 @@ const collection = CollectionMother.create({ name: COLLECTION_NAME, id: 'test-al
 
 const mountCreateDataset = (component: JSX.Element): void => {
   cy.customMount(
-    <WithRepositories collectionRepository={collectionRepository}>{component}</WithRepositories>
+    <WithRepositories
+      collectionRepository={collectionRepository}
+      datasetRepository={datasetRepository}>
+      {component}
+    </WithRepositories>
   )
 }
 
@@ -49,7 +53,6 @@ describe('Create Dataset', () => {
     collectionRepository.getById = cy.stub().resolves(null)
     mountCreateDataset(
       <CreateDataset
-        datasetRepository={datasetRepository}
         templateRepository={templateRepository}
         metadataBlockInfoRepository={metadataBlockInfoRepository}
         collectionId={'non-existing-collection'}
@@ -66,7 +69,6 @@ describe('Create Dataset', () => {
 
     mountCreateDataset(
       <CreateDataset
-        datasetRepository={datasetRepository}
         templateRepository={templateRepository}
         metadataBlockInfoRepository={metadataBlockInfoRepository}
         collectionId={'test-collectionId'}
@@ -82,7 +84,6 @@ describe('Create Dataset', () => {
   it('should render the correct breadcrumbs', () => {
     mountCreateDataset(
       <CreateDataset
-        datasetRepository={datasetRepository}
         templateRepository={templateRepository}
         metadataBlockInfoRepository={metadataBlockInfoRepository}
         collectionId={'test-collectionId'}
@@ -101,7 +102,6 @@ describe('Create Dataset', () => {
     mountCreateDataset(
       <NotImplementedModalProvider>
         <CreateDataset
-          datasetRepository={datasetRepository}
           collectionId={'test-collectionId'}
           templateRepository={templateRepository}
           metadataBlockInfoRepository={metadataBlockInfoRepository}
@@ -127,7 +127,6 @@ describe('Create Dataset', () => {
 
     mountCreateDataset(
       <CreateDataset
-        datasetRepository={datasetRepository}
         templateRepository={templateRepository}
         metadataBlockInfoRepository={metadataBlockInfoRepository}
         collectionId={'test-collectionId'}
@@ -139,7 +138,6 @@ describe('Create Dataset', () => {
   it('should not show alert error message when user is allowed to create a dataset within the collection', () => {
     mountCreateDataset(
       <CreateDataset
-        datasetRepository={datasetRepository}
         templateRepository={templateRepository}
         metadataBlockInfoRepository={metadataBlockInfoRepository}
         collectionId={'test-collectionId'}
@@ -152,7 +150,6 @@ describe('Create Dataset', () => {
     it('should not show template select when there are no templates', () => {
       mountCreateDataset(
         <CreateDataset
-          datasetRepository={datasetRepository}
           templateRepository={templateRepository}
           metadataBlockInfoRepository={metadataBlockInfoRepository}
           collectionId={'test-collectionId'}
@@ -162,7 +159,7 @@ describe('Create Dataset', () => {
     })
 
     it('should show template select when there are templates', () => {
-      const testDatasetTemplate1 = DatasetTemplateMother.create({
+      const testDatasetTemplate1 = TemplateMother.create({
         name: 'Template 1',
         isDefault: false
       })
@@ -170,7 +167,6 @@ describe('Create Dataset', () => {
 
       mountCreateDataset(
         <CreateDataset
-          datasetRepository={datasetRepository}
           templateRepository={templateRepository}
           metadataBlockInfoRepository={metadataBlockInfoRepository}
           collectionId={'test-collectionId'}
@@ -182,11 +178,11 @@ describe('Create Dataset', () => {
     })
 
     it('should set default template when there is one', () => {
-      const testDatasetTemplate1 = DatasetTemplateMother.create({
+      const testDatasetTemplate1 = TemplateMother.create({
         name: 'Template 1',
         isDefault: false
       })
-      const testDatasetTemplate2 = DatasetTemplateMother.create({
+      const testDatasetTemplate2 = TemplateMother.create({
         name: 'Template 2',
         isDefault: true
       })
@@ -196,7 +192,6 @@ describe('Create Dataset', () => {
 
       mountCreateDataset(
         <CreateDataset
-          datasetRepository={datasetRepository}
           templateRepository={templateRepository}
           metadataBlockInfoRepository={metadataBlockInfoRepository}
           collectionId={'test-collectionId'}
@@ -208,11 +203,11 @@ describe('Create Dataset', () => {
     })
 
     it('should change template when user selects another one', () => {
-      const testDatasetTemplate1 = DatasetTemplateMother.create({
+      const testDatasetTemplate1 = TemplateMother.create({
         name: 'Template 1',
         isDefault: false
       })
-      const testDatasetTemplate2 = DatasetTemplateMother.create({
+      const testDatasetTemplate2 = TemplateMother.create({
         name: 'Template 2',
         isDefault: false
       })
@@ -222,7 +217,6 @@ describe('Create Dataset', () => {
 
       mountCreateDataset(
         <CreateDataset
-          datasetRepository={datasetRepository}
           templateRepository={templateRepository}
           metadataBlockInfoRepository={metadataBlockInfoRepository}
           collectionId={'test-collectionId'}

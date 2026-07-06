@@ -8,7 +8,6 @@ import { useFiles } from './useFiles'
 import { PaginationControls } from '../../shared/pagination/PaginationControls'
 import { DatasetVersion } from '../../../dataset/domain/models/Dataset'
 import { FilePaginationInfo } from '../../../files/domain/models/FilePaginationInfo'
-import { DatasetRepository } from '@/dataset/domain/repositories/DatasetRepository'
 import { FilesTree } from './files-tree/FilesTree'
 import { FilesViewToggle, FilesViewMode } from './files-view-toggle/FilesViewToggle'
 import { FileTreeRepository } from '@/files/domain/repositories/FileTreeRepository'
@@ -27,7 +26,6 @@ interface DatasetFilesProps {
   filesRepository: FileRepository
   datasetPersistentId: string
   datasetVersion: DatasetVersion
-  datasetRepository: DatasetRepository
   fileTreeRepository?: FileTreeRepository
 }
 
@@ -35,7 +33,6 @@ export function DatasetFiles({
   filesRepository,
   datasetPersistentId,
   datasetVersion,
-  datasetRepository,
   fileTreeRepository
 }: DatasetFilesProps) {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -68,7 +65,6 @@ export function DatasetFiles({
       filesRepository={filesRepository}
       datasetPersistentId={datasetPersistentId}
       datasetVersion={datasetVersion}
-      datasetRepository={datasetRepository}
       onChangeView={setView}
       view={view}
     />
@@ -79,7 +75,6 @@ interface DatasetFilesTableViewProps {
   filesRepository: FileRepository
   datasetPersistentId: string
   datasetVersion: DatasetVersion
-  datasetRepository: DatasetRepository
   onChangeView: (view: FilesViewMode) => void
   view: FilesViewMode
 }
@@ -88,7 +83,6 @@ function DatasetFilesTableView({
   filesRepository,
   datasetPersistentId,
   datasetVersion,
-  datasetRepository,
   onChangeView,
   view
 }: DatasetFilesTableViewProps) {
@@ -120,7 +114,6 @@ function DatasetFilesTableView({
         paginationInfo={paginationInfo}
         filesTotalDownloadSize={filesTotalDownloadSize}
         criteria={criteria}
-        datasetRepository={datasetRepository}
       />
       <PaginationControls
         initialPaginationInfo={paginationInfo}

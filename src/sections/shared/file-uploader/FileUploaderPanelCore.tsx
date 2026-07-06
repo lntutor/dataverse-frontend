@@ -11,7 +11,6 @@ import { UploaderFileRepository } from './types'
 
 export interface FileUploaderPanelCoreProps {
   fileRepository: UploaderFileRepository
-  datasetRepository?: DatasetRepository
   datasetPersistentId: string
   fetchUploadLimits?: (
     datasetId: string | number,
@@ -23,7 +22,6 @@ export interface FileUploaderPanelCoreProps {
 
 export const FileUploaderPanelCore = ({
   fileRepository,
-  datasetRepository,
   datasetPersistentId,
   fetchUploadLimits,
   onCancel
@@ -55,7 +53,6 @@ export const FileUploaderPanelCore = ({
     <Stack gap={4}>
       <FileUploadInput
         fileRepository={fileRepository}
-        datasetRepository={datasetRepository}
         datasetPersistentId={datasetPersistentId}
         fetchUploadLimits={fetchUploadLimits}
       />
