@@ -28,22 +28,33 @@ describe('JSFileTreeMapper.toFileTreeFile', () => {
     }
     const sdkRestricted: FileTreeFileNode = { ...sdkPublic, id: 2, access: 'restricted' }
     const sdkEmbargoed: FileTreeFileNode = { ...sdkPublic, id: 3, access: 'embargoed' }
+    const sdkRetentionExpired: FileTreeFileNode = {
+      ...sdkPublic,
+      id: 4,
+      access: 'retentionExpired'
+    }
 
     const pub = JSFileTreeMapper.toFileTreeFile(sdkPublic)
     const restr = JSFileTreeMapper.toFileTreeFile(sdkRestricted)
     const emb = JSFileTreeMapper.toFileTreeFile(sdkEmbargoed)
+    const ret = JSFileTreeMapper.toFileTreeFile(sdkRetentionExpired)
 
     expect(pub.accessStatus).to.equal('public')
     expect(restr.accessStatus).to.equal('restricted')
     expect(emb.accessStatus).to.equal('embargoed')
+    expect(ret.accessStatus).to.equal('retentionExpired')
 
-    // FileAccess collapses both non-public buckets — kept for legacy
+    // FileAccess collapses the non-public buckets — kept for legacy
     // consumers, validated here so we notice if the mapping ever drifts.
     expect(pub.access?.restricted).to.equal(false)
     expect(restr.access?.restricted).to.equal(true)
     expect(emb.access?.restricted).to.equal(true)
+    expect(ret.access?.restricted).to.equal(true)
     expect(restr.access?.canBeRequested).to.equal(true)
     expect(emb.access?.canBeRequested).to.equal(false)
+    // A retention-expired file cannot be served at all, so it must not
+    // advertise itself as requestable.
+    expect(ret.access?.canBeRequested).to.equal(false)
   })
 
   it('leaves accessStatus undefined when the SDK omits access (older server)', () => {
@@ -85,12 +96,12 @@ describe('JSFileTreeMapper.toFileTreeFile', () => {
 })
 
 describe('JSFileTreeMapper.toFileTreeFolder', () => {
-  it('passes the recursive counts shape through, including bytes / restricted / embargoed', () => {
+  it('passes the recursive counts shape through, including bytes / restricted / embargoed / retentionExpired', () => {
     const node: FileTreeFolderNode = {
       type: FileTreeNodeType.FOLDER,
       name: 'mixed',
       path: 'mixed',
-      counts: { files: 5, folders: 1, bytes: 8192, restricted: 2, embargoed: 1 }
+      counts: { files: 5, folders: 1, bytes: 8192, restricted: 2, embargoed: 1, retentionExpired: 1 }
     }
     const out = JSFileTreeMapper.toFileTreeFolder(node)
     expect(out.type).to.equal(FileTreeItemType.FOLDER)
@@ -101,7 +112,8 @@ describe('JSFileTreeMapper.toFileTreeFolder', () => {
       folders: 1,
       bytes: 8192,
       restricted: 2,
-      embargoed: 1
+      embargoed: 1,
+      retentionExpired: 1
     })
   })
 

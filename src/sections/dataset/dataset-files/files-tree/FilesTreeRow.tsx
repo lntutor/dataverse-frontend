@@ -15,7 +15,14 @@ import {
 } from './icons/FilesTreeIcons'
 import styles from './FilesTree.module.scss'
 import { SelectionState } from './useFileTreeSelection'
-import { formatBytes, formatCount, formatFileAccess, formatFolderAccess } from './format'
+import {
+  AccessVariant,
+  fileAccessVariant,
+  folderAccessParts,
+  folderAccessVariant,
+  formatBytes,
+  formatCount
+} from './format'
 
 interface FilesTreeRowProps {
   depth: number
@@ -58,6 +65,28 @@ interface FilesTreeRowProps {
 const INDENT_BASE = 14
 const INDENT_PER_LEVEL = 18
 
+const ACCESS_VARIANT_CLASS: Record<AccessVariant, string> = {
+  restricted: 'row-access-restricted',
+  embargoed: 'row-access-embargoed',
+  retentionExpired: 'row-access-retention-expired'
+}
+
+// Inline i18n defaults, following the `t(key, default)` pattern the
+// header cells use, so the cell renders sensibly even before the
+// locale bundle loads.
+const FILE_ACCESS_LABEL_DEFAULTS = {
+  public: 'Public',
+  restricted: 'Restricted',
+  embargoed: 'Embargoed',
+  retentionExpired: 'Retention expired'
+} as const
+
+const FOLDER_ACCESS_WORD_DEFAULTS: Record<AccessVariant, string> = {
+  restricted: 'restricted',
+  embargoed: 'embargoed',
+  retentionExpired: 'retention expired'
+}
+
 export function FilesTreeRow({
   depth,
   top,
@@ -77,6 +106,9 @@ export function FilesTreeRow({
 }: FilesTreeRowProps) {
   const { t } = useTranslation('files')
   const isFile = isFileTreeFile(item)
+  const accessVariant = isFile
+    ? fileAccessVariant(item.accessStatus)
+    : folderAccessVariant(item.counts)
   const indent: CSSProperties = {
     paddingLeft: INDENT_BASE + depth * INDENT_PER_LEVEL
   }
@@ -177,16 +209,23 @@ export function FilesTreeRow({
         {isFile ? formatBytes(item.size) : formatBytes(item.counts?.bytes)}
       </div>
       <div
-        className={cn(styles['row-access'], {
-          [styles['row-access-restricted']]: isFile
-            ? item.accessStatus === 'restricted'
-            : (item.counts?.restricted ?? 0) > 0,
-          [styles['row-access-embargoed']]: isFile
-            ? item.accessStatus === 'embargoed'
-            : (item.counts?.restricted ?? 0) === 0 && (item.counts?.embargoed ?? 0) > 0
-        })}
+        className={cn(
+          styles['row-access'],
+          accessVariant && styles[ACCESS_VARIANT_CLASS[accessVariant]]
+        )}
         data-testid={`files-tree-row-access-${item.path}`}>
-        {isFile ? formatFileAccess(item.accessStatus) : formatFolderAccess(item.counts)}
+        {isFile
+          ? item.accessStatus
+            ? t(`tree.access.${item.accessStatus}`, FILE_ACCESS_LABEL_DEFAULTS[item.accessStatus])
+            : ''
+          : folderAccessParts(item.counts)
+              .map((part) =>
+                t(`tree.access.count.${part.key}`, {
+                  count: part.count,
+                  defaultValue: `{{count}} ${FOLDER_ACCESS_WORD_DEFAULTS[part.key]}`
+                })
+              )
+              .join(' · ')}
       </div>
       <div className={styles['row-count']}>
         {!isFile && item.counts ? formatCount(item.counts.files) : ''}

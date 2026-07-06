@@ -30,6 +30,10 @@
 # alongside build-artefact resets). Ignore it instead.
 /dist-reusable-components
 
+# Scratch dir of dataverse-context/scripts/fe-test-parallel.sh (worker
+# logs + exit files); regenerated on every parallel test run.
+/.test-parallel
+
 # storybook
 /storybook-static
 

@@ -1,8 +1,9 @@
 import {
+  fileAccessVariant,
+  folderAccessParts,
+  folderAccessVariant,
   formatBytes,
-  formatCount,
-  formatFileAccess,
-  formatFolderAccess
+  formatCount
 } from '../../../../../../src/sections/dataset/dataset-files/files-tree/format'
 
 describe('formatBytes', () => {
@@ -18,11 +19,14 @@ describe('formatBytes', () => {
     expect(formatBytes(1023)).to.equal('1023 B')
   })
 
-  it('formats KB / MB / GB ranges', () => {
-    expect(formatBytes(1024)).to.equal('1.0 KB')
-    expect(formatBytes(1024 * 1024)).to.equal('1.0 MB')
-    expect(formatBytes(1024 * 1024 * 1024)).to.equal('1.00 GB')
-    expect(formatBytes(5 * 1024 * 1024 * 1024)).to.equal('5.00 GB')
+  it('matches the files-table FileSize ladder for KB / MB / GB / TB', () => {
+    expect(formatBytes(1024)).to.equal('1 KB')
+    expect(formatBytes(1536)).to.equal('1.5 KB')
+    expect(formatBytes(1024 * 1024)).to.equal('1 MB')
+    expect(formatBytes(5 * 1024 * 1024 * 1024)).to.equal('5 GB')
+    // The previous hand-rolled formatter capped at GB and would have
+    // shown this as "2048.00 GB" while the files table said "2 TB".
+    expect(formatBytes(2 * 1024 ** 4)).to.equal('2 TB')
   })
 })
 
@@ -46,42 +50,56 @@ describe('formatCount', () => {
   })
 })
 
-describe('formatFileAccess', () => {
-  it('returns empty string for undefined access (older server / SDK)', () => {
-    expect(formatFileAccess(undefined)).to.equal('')
+describe('fileAccessVariant', () => {
+  it('returns undefined for public and unknown access (no colour cue)', () => {
+    expect(fileAccessVariant(undefined)).to.equal(undefined)
+    expect(fileAccessVariant('public')).to.equal(undefined)
   })
 
-  it('capitalises each access bucket', () => {
-    expect(formatFileAccess('public')).to.equal('Public')
-    expect(formatFileAccess('restricted')).to.equal('Restricted')
-    expect(formatFileAccess('embargoed')).to.equal('Embargoed')
+  it('returns each non-public state as its own variant', () => {
+    expect(fileAccessVariant('restricted')).to.equal('restricted')
+    expect(fileAccessVariant('embargoed')).to.equal('embargoed')
+    expect(fileAccessVariant('retentionExpired')).to.equal('retentionExpired')
   })
 })
 
-describe('formatFolderAccess', () => {
-  it('returns empty string when counts are absent', () => {
-    expect(formatFolderAccess(undefined)).to.equal('')
-  })
-
-  it('returns empty string when subtree is all public (default case is silent)', () => {
-    expect(formatFolderAccess({ restricted: 0, embargoed: 0 })).to.equal('')
-    // Both fields are individually optional — undefined coerces to 0.
-    expect(formatFolderAccess({})).to.equal('')
-  })
-
-  it('reports a restricted-only subtree with the exact count', () => {
-    expect(formatFolderAccess({ restricted: 3, embargoed: 0 })).to.equal('3 restricted')
-    expect(formatFolderAccess({ restricted: 1 })).to.equal('1 restricted')
-  })
-
-  it('reports an embargoed-only subtree with the exact count', () => {
-    expect(formatFolderAccess({ restricted: 0, embargoed: 1 })).to.equal('1 embargoed')
-    expect(formatFolderAccess({ embargoed: 4 })).to.equal('4 embargoed')
-  })
-
-  it('combines counts when the subtree mixes restricted and embargoed', () => {
-    expect(formatFolderAccess({ restricted: 3, embargoed: 1 })).to.equal(
-      '3 restricted · 1 embargoed'
+describe('folderAccessVariant', () => {
+  it('returns undefined when the subtree is all public or counts are absent', () => {
+    expect(folderAccessVariant(undefined)).to.equal(undefined)
+    expect(folderAccessVariant({})).to.equal(undefined)
+    expect(folderAccessVariant({ restricted: 0, embargoed: 0, retentionExpired: 0 })).to.equal(
+      undefined
     )
+  })
+
+  it('follows the server resolution order: retentionExpired > restricted > embargoed', () => {
+    expect(folderAccessVariant({ restricted: 1, embargoed: 2, retentionExpired: 3 })).to.equal(
+      'retentionExpired'
+    )
+    expect(folderAccessVariant({ restricted: 1, embargoed: 2 })).to.equal('restricted')
+    expect(folderAccessVariant({ embargoed: 2 })).to.equal('embargoed')
+  })
+})
+
+describe('folderAccessParts', () => {
+  it('returns no parts when counts are absent or all zero', () => {
+    expect(folderAccessParts(undefined)).to.deep.equal([])
+    expect(folderAccessParts({})).to.deep.equal([])
+    expect(folderAccessParts({ restricted: 0, embargoed: 0 })).to.deep.equal([])
+  })
+
+  it('lists each non-empty bucket with its count, in display order', () => {
+    expect(folderAccessParts({ restricted: 3 })).to.deep.equal([
+      { key: 'restricted', count: 3 }
+    ])
+    expect(folderAccessParts({ embargoed: 4 })).to.deep.equal([{ key: 'embargoed', count: 4 }])
+    expect(folderAccessParts({ retentionExpired: 2 })).to.deep.equal([
+      { key: 'retentionExpired', count: 2 }
+    ])
+    expect(folderAccessParts({ restricted: 3, embargoed: 1, retentionExpired: 2 })).to.deep.equal([
+      { key: 'restricted', count: 3 },
+      { key: 'embargoed', count: 1 },
+      { key: 'retentionExpired', count: 2 }
+    ])
   })
 })

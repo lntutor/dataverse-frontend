@@ -218,6 +218,56 @@ describe('FilesTreeRow', () => {
       .should('contain', 'row-access-embargoed')
   })
 
+  it('renders "Retention expired" for a retention-expired file row, with the danger-emphasis class', () => {
+    const file = FileTreeFileMother.create({
+      id: 104,
+      name: 'expired.txt',
+      path: 'expired.txt',
+      size: 10,
+      accessStatus: 'retentionExpired'
+    })
+    cy.customMount(
+      <FilesTreeRow
+        depth={0}
+        top={0}
+        height={32}
+        item={file}
+        selectionState="none"
+        onToggleSelection={() => undefined}
+        onDownload={() => undefined}
+        datasetVersionNumber={versionNumber}
+      />
+    )
+    cy.findByTestId(`files-tree-row-access-${file.path}`)
+      .should('have.text', 'Retention expired')
+      .invoke('attr', 'class')
+      .should('contain', 'row-access-retention-expired')
+  })
+
+  it('renders the retention-expired subtree count for a folder row, with the danger-emphasis class', () => {
+    const folder = FileTreeFolderMother.create({
+      name: 'aged',
+      path: 'aged',
+      counts: { files: 2, folders: 0, retentionExpired: 2 }
+    })
+    cy.customMount(
+      <FilesTreeRow
+        depth={0}
+        top={0}
+        height={32}
+        item={folder}
+        selectionState="none"
+        onToggleSelection={() => undefined}
+        onDownload={() => undefined}
+        datasetVersionNumber={versionNumber}
+      />
+    )
+    cy.findByTestId(`files-tree-row-access-${folder.path}`)
+      .should('have.text', '2 retention expired')
+      .invoke('attr', 'class')
+      .should('contain', 'row-access-retention-expired')
+  })
+
   it('leaves the access cell empty for a file with no accessStatus (older server)', () => {
     const file = FileTreeFileMother.create({
       id: 103,
@@ -258,7 +308,7 @@ describe('FilesTreeRow', () => {
         datasetVersionNumber={versionNumber}
       />
     )
-    cy.findByTestId(`files-tree-row-${folder.path}`).should('contain.text', '4.0 KB')
+    cy.findByTestId(`files-tree-row-${folder.path}`).should('contain.text', '4 KB')
   })
 
   it('renders the restricted count for a folder whose subtree contains restricted files', () => {

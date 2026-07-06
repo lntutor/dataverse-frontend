@@ -256,6 +256,10 @@ $indent-step: 18px;
   color: var(--bs-info-text-emphasis, #087990);
 }
 
+.row-access-retention-expired {
+  color: var(--bs-danger-text-emphasis, #b02a37);
+}
+
 .row-actions {
   display: flex;
   align-items: center;
