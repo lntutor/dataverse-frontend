@@ -392,6 +392,29 @@ describe('FileUploader', () => {
       cy.findByText('Drag and drop files and/or directories here.').should('exist')
     })
 
+    it('uploads files picked via the folder input (webkitdirectory)', () => {
+      cy.customMount(
+        <TestFileUploader
+          fileRepository={fileMockRepository}
+          datasetPersistentId=":latest"
+          storageType="S3"
+          operationType={OperationType.ADD_FILES_TO_DATASET}
+        />
+      )
+
+      // The hidden directory-picker input has its own change handler —
+      // drive it directly, the way the browser does after a folder pick.
+      cy.get('input[type=file][webkitdirectory]').selectFile(
+        {
+          fileName: 'nested.json',
+          contents: [{ name: 'From Folder' }]
+        },
+        { force: true }
+      )
+      cy.findByText('nested.json').should('exist')
+      cy.findByText('1 File uploaded').should('exist')
+    })
+
     it('renders the files being uploaded', () => {
       cy.customMount(
         <TestFileUploader
