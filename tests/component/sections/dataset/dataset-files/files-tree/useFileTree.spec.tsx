@@ -346,6 +346,36 @@ describe('useFileTree', () => {
     expect(auxCalls()).to.equal(1)
   })
 
+  it('collapsing the root drops every expanded descendant', async () => {
+    const rootPage = FileTreePageMother.create({
+      path: '',
+      items: [FileTreeFolderMother.create({ name: 'data', path: 'data' })]
+    })
+    const dataPage = FileTreePageMother.create({ path: 'data', items: [] })
+    const repo = new FakeRepo({ '': [rootPage], data: [dataPage] })
+
+    const { result } = renderHook(() =>
+      useFileTree({
+        repository: repo,
+        datasetPersistentId: 'doi:test/AAA',
+        datasetVersion
+      })
+    )
+    await waitFor(() => expect(result.current.rootNode.loaded).to.equal(true))
+    await act(async () => {
+      await result.current.expand('data')
+    })
+    expect(result.current.expanded.has('data')).to.equal(true)
+
+    act(() => {
+      result.current.collapse('')
+    })
+    // Root itself leaves the set AND every descendant goes with it, so
+    // the URL bookmark (deepest expanded) resets to the root.
+    expect(result.current.expanded.has('data')).to.equal(false)
+    expect(result.current.currentPath).to.equal('')
+  })
+
   it('discards a stale in-flight response after the version key changes', async () => {
     const v1 = DatasetVersionMother.create({ number: new DatasetVersionNumber(1, 0) })
     const v2 = DatasetVersionMother.create({ number: new DatasetVersionNumber(2, 0) })
@@ -375,9 +405,15 @@ describe('useFileTree', () => {
         if (call === 2) {
           return Promise.resolve(newPage)
         }
-        return new Promise<typeof oldPage>((_resolve, reject) => {
-          rejectStale = reject
-        })
+        if (call === 3) {
+          // The v2 'sub' refresh — keep ITS rejecter so we can fail it
+          // after the tree has already reset to v1.
+          return new Promise<typeof oldPage>((_resolve, reject) => {
+            rejectStale = reject
+          })
+        }
+        // Any later fetch (the v1 reset's root/ancestor loads) just hangs.
+        return new Promise<typeof oldPage>(() => undefined)
       }
     }
 

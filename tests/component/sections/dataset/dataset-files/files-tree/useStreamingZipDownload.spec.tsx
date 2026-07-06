@@ -17,7 +17,7 @@ function StreamingZipHarness({
   partRetries = 0
 }: {
   files: FileTreeFile[]
-  zipName: string
+  zipName?: string
   strategy?: 'pause' | 'skip' | 'twopass'
   partSize?: number
   /**
@@ -354,6 +354,118 @@ describe('useStreamingZipDownload + FilesTreeDownloadTray', () => {
       .should('not.contain', 'tray-open')
     cy.wait(100)
     cy.get('@anchorClick').should('not.have.been.called')
+  })
+
+  it('closing the tray at the awaiting-retry gate cancels instead of leaking the decision', () => {
+    const files: FileTreeFile[] = [
+      FileTreeFileMother.create({
+        id: 1,
+        name: 'a.txt',
+        path: 'a.txt',
+        size: 3,
+        downloadUrl: '/access/1'
+      }),
+      FileTreeFileMother.create({
+        id: 2,
+        name: 'gone.bin',
+        path: 'gone.bin',
+        size: 3,
+        downloadUrl: '/access/2'
+      })
+    ]
+
+    // No zipName on purpose: exercises the 'dataset.zip' default too.
+    cy.customMount(<StreamingZipHarness files={files} />)
+    installFetchHandler((input) => {
+      const url = String(input)
+      if (url.endsWith('/access/1')) return Promise.resolve(fakeResponseBody('AAA'))
+      return Promise.reject(new Error('gone'))
+    })
+
+    cy.findByTestId('harness-start').click()
+    cy.findByTestId('files-tree-download-tray-failure').should('be.visible')
+    cy.contains(/Skip & retry at end/i).click()
+    cy.findByTestId('files-tree-download-tray-twopass').should('be.visible')
+    cy.findByRole('button', { name: /close/i }).click()
+    cy.findByTestId('files-tree-download-tray')
+      .invoke('attr', 'class')
+      .should('not.contain', 'tray-open')
+    cy.wait(100)
+    cy.get('@anchorClick').should('not.have.been.called')
+  })
+
+  it('closing mid-run with more files queued drops the rest of the queue', () => {
+    const files: FileTreeFile[] = [
+      FileTreeFileMother.create({
+        id: 1,
+        name: 'slow.bin',
+        path: 'slow.bin',
+        size: 4,
+        downloadUrl: '/access/slow'
+      }),
+      FileTreeFileMother.create({
+        id: 2,
+        name: 'queued.bin',
+        path: 'queued.bin',
+        size: 4,
+        downloadUrl: '/access/queued'
+      })
+    ]
+
+    cy.customMount(<StreamingZipHarness files={files} zipName="queue-drop.zip" />)
+    let releaseFetch: ((r: Response) => void) | undefined
+    let fetches = 0
+    installFetchHandler(() => {
+      fetches += 1
+      return new Promise<Response>((resolve) => {
+        releaseFetch = resolve
+      })
+    })
+
+    cy.findByTestId('harness-start').click()
+    cy.findByTestId('files-tree-download-tray').should('be.visible')
+    cy.findByRole('button', { name: /close/i }).click()
+    // Release the first file AFTER the close; the loop-top cancellation
+    // check must stop before ever fetching the second file.
+    cy.then(() => releaseFetch?.(fakeResponseBody('DATA')))
+    cy.wait(150)
+    cy.then(() => expect(fetches).to.equal(1))
+    cy.get('@anchorClick').should('not.have.been.called')
+  })
+
+  it('demotion after pass 2 keeps an earlier explicit skip non-recoverable', () => {
+    const files: FileTreeFile[] = [
+      FileTreeFileMother.create({
+        id: 1,
+        name: 'skipme.bin',
+        path: 'skipme.bin',
+        size: 3,
+        downloadUrl: '/access/skipme'
+      }),
+      FileTreeFileMother.create({
+        id: 2,
+        name: 'cursed.bin',
+        path: 'cursed.bin',
+        size: 3,
+        downloadUrl: '/access/cursed'
+      })
+    ]
+
+    cy.customMount(<StreamingZipHarness files={files} zipName="mixed.zip" />)
+    installFetchHandler(() => Promise.reject(new Error('always broken')))
+
+    cy.findByTestId('harness-start').click()
+    // First failure: explicit Skip (non-recoverable in failedSoFar).
+    cy.findByTestId('files-tree-download-tray-failure').should('be.visible')
+    cy.contains(/^Skip$/).click()
+    // Second failure: defer to a second pass, then fail it again.
+    cy.findByTestId('files-tree-download-tray-failure').should('be.visible')
+    cy.contains(/Skip & retry at end/i).click()
+    cy.findByTestId('files-tree-download-tray-twopass').should('be.visible')
+    cy.contains(/Download 1 missing file/i).click()
+    // Both files end up skipped: the explicit skip plus the demoted
+    // second-pass survivor.
+    cy.contains(/Download complete — 2 skipped/i).should('exist')
   })
 
   it('cancels the run from the pause-on-fail dialog and reports cancelled state', () => {

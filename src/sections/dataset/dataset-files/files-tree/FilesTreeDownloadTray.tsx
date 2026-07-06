@@ -173,8 +173,12 @@ export function FilesTreeDownloadTray({ api, open, onClose }: FilesTreeDownloadT
               <div className={styles['tray-fail-actions']}>
                 <Button variant="primary" size="sm" onClick={api.retryFailed}>
                   {t('tree.download.tray.retryFailed', {
-                    defaultValue: 'Download {{count}} missing file(s)',
-                    count: state.failedSoFar.length
+                    defaultValue_one: 'Download {{count}} missing file',
+                    defaultValue_other: 'Download {{count}} missing files',
+                    // Only the recoverable failures get a second pass —
+                    // explicitly skipped files are already in the
+                    // manifest and must not inflate this count.
+                    count: state.failedSoFar.filter((f) => f.recoverable).length
                   })}
                 </Button>
                 <Button variant="link" size="sm" onClick={onClose}>

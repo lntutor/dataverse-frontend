@@ -17,7 +17,7 @@ interface FilesTreeHeaderProps {
  * (`aria-hidden`); the only interactive element is the optional
  * select-all checkbox in the dedicated select column.
  */
-export function FilesTreeHeader({ selectAllState, onToggleSelectAll }: FilesTreeHeaderProps = {}) {
+export function FilesTreeHeader({ selectAllState, onToggleSelectAll }: FilesTreeHeaderProps) {
   const { t } = useTranslation('files')
   return (
     <div className={styles['tree-head']}>

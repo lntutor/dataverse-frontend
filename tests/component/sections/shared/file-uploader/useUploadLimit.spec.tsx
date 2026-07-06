@@ -32,6 +32,13 @@ describe('useUploadLimit', () => {
     })
   })
 
+  it('skips fetching entirely when no dataset repository is available (standalone mount)', async () => {
+    const { result } = renderHook(() => useUploadLimit(DATASET_PERSISTENT_ID, undefined))
+    await waitFor(() => expect(result.current.isLoadingUploadLimits).to.equal(false))
+    expect(result.current.uploadLimit).to.deep.equal({})
+    expect(result.current.errorUploadLimits).to.equal(null)
+  })
+
   it('returns empty uploadLimit when no limits are present', async () => {
     const fetchUploadLimits = cy.stub().resolves({})
 

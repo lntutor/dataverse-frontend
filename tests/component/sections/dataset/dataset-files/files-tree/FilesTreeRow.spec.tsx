@@ -290,6 +290,29 @@ describe('FilesTreeRow', () => {
     cy.findByTestId(`files-tree-row-access-${file.path}`).should('have.text', '')
   })
 
+  it('renders no download action when onDownload is not provided', () => {
+    const file = FileTreeFileMother.create({
+      id: 105,
+      name: 'plain.txt',
+      path: 'plain.txt',
+      size: 10
+    })
+    cy.customMount(
+      <FilesTreeRow
+        depth={0}
+        top={0}
+        height={32}
+        item={file}
+        selectionState="none"
+        onToggleSelection={() => undefined}
+        datasetVersionNumber={versionNumber}
+      />
+    )
+    cy.findByTestId(`files-tree-row-${file.path}`).within(() => {
+      cy.findByRole('button', { name: /download/i }).should('not.exist')
+    })
+  })
+
   it('renders the recursive byte total in the size column for a folder row', () => {
     const folder = FileTreeFolderMother.create({
       name: 'data',

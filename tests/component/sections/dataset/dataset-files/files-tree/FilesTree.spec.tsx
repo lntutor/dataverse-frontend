@@ -141,6 +141,40 @@ describe('FilesTree', () => {
     cy.findByText(/this dataset has no files/i).should('exist')
   })
 
+  it('auto-loads a never-expanded folder that the filter query force-opens', () => {
+    const root = FileTreePageMother.create({
+      path: '',
+      items: [FileTreeFolderMother.create({ name: 'matching', path: 'matching' })]
+    })
+    const child = FileTreePageMother.create({
+      path: 'matching',
+      items: [
+        // Also matches the query — the walk filters every row, including
+        // children of a name-matched folder.
+        FileTreeFileMother.create({
+          id: 7,
+          name: 'matching-inside.txt',
+          path: 'matching/matching-inside.txt'
+        })
+      ]
+    })
+    const repo = new FakeTreeRepository({ '': root, matching: child })
+
+    cy.customMount(
+      <FilesTree
+        treeRepository={repo}
+        datasetPersistentId="doi:10.5072/FK2/AAA"
+        datasetVersion={datasetVersion}
+        query="matching"
+      />
+    )
+
+    // The folder was never expanded by the user; the query opens it and
+    // the auto-load effect must fetch its children instead of leaving a
+    // spinner row forever.
+    cy.findByText('matching-inside.txt').should('exist')
+  })
+
   it('renders a "no matches" state when query has no hits', () => {
     const root = FileTreePageMother.create({
       path: '',
