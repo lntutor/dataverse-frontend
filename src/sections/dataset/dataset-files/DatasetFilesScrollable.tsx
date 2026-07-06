@@ -259,6 +259,13 @@ function DatasetFilesScrollableTableView({
   if (errors.some(Boolean)) {
     return (
       <>
+        {/* Keep the view toggle reachable: these errors come from the
+            table-only data hooks, and the tree view (different endpoint)
+            may well still work — without the toggle the user's only way
+            out is hand-editing the URL. */}
+        <div className={styles['view-toggle-row']}>
+          <FilesViewToggle view={view} onChange={onChangeView} />
+        </div>
         {errors.map((error, index) => {
           if (error) {
             return (

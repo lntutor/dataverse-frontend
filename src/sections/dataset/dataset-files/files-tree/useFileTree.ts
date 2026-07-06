@@ -3,7 +3,7 @@ import {
   FileTreeRepository,
   GetFileTreeNodeParams
 } from '@/files/domain/repositories/FileTreeRepository'
-import { FileTreeFile, FileTreeItem, isFileTreeFile } from '@/files/domain/models/FileTreeItem'
+import { FileTreeItem } from '@/files/domain/models/FileTreeItem'
 import { FileTreeInclude, FileTreeOrder } from '@/files/domain/models/FileTreePage'
 import { DatasetVersion } from '@/dataset/domain/models/Dataset'
 
@@ -47,8 +47,13 @@ export interface UseFileTreeApi {
   collapse: (path: string) => void
   loadMore: (path: string) => Promise<void>
   refresh: (path?: string) => Promise<void>
-  registerKnownFile: (file: FileTreeFile) => void
-  knownFiles: ReadonlyMap<string, FileTreeFile>
+  /**
+   * Fetch a folder's first page if it has never loaded (or errored),
+   * deduplicating concurrent calls. Exposed so the host can service
+   * folders that became visible without an explicit expand — e.g. a
+   * filter query force-opening a never-fetched folder.
+   */
+  ensureLoaded: (path: string) => Promise<void>
   visibleKnownChildren: (path: string) => FileTreeItem[]
 }
 
@@ -110,7 +115,6 @@ export function useFileTree({
     return set
   })()
   const [expanded, setExpanded] = useState<Set<string>>(() => initialExpanded)
-  const knownFilesRef = useRef<Map<string, FileTreeFile>>(new Map())
   const inFlight = useRef<Map<string, Promise<void>>>(new Map())
   const versionKey = `${datasetPersistentId}::${datasetVersion.number.toString()}::${order}::${include}`
   const previousKey = useRef<string>(versionKey)
@@ -123,6 +127,12 @@ export function useFileTree({
   // started under the previous mount completed against the wrong
   // setState closure.
   const mountedRef = useRef(true)
+  // Incremented on every versionKey reset. A fetch captures the value at
+  // start and discards its response if the tree was reset while it was in
+  // flight — without this, a slow response from the PREVIOUS version /
+  // order / include lands in the fresh map with `loaded: true`, and
+  // ensureLoaded then pins the stale items until a manual refresh.
+  const generationRef = useRef(0)
 
   const setNode = useCallback((path: string, updater: (prev: FolderNode) => FolderNode) => {
     if (!mountedRef.current) return
@@ -151,14 +161,11 @@ export function useFileTree({
         order,
         include
       }
+      const generation = generationRef.current
       setNode(path, (prev) => ({ ...prev, loading: true, error: undefined }))
       try {
         const page = await repository.getNode(params)
-        for (const item of page.items) {
-          if (isFileTreeFile(item)) {
-            knownFilesRef.current.set(item.path, item)
-          }
-        }
+        if (generation !== generationRef.current) return
         setNode(path, (prev) => ({
           ...prev,
           items: cursor ? [...prev.items, ...page.items] : page.items,
@@ -168,6 +175,7 @@ export function useFileTree({
           error: undefined
         }))
       } catch (error) {
+        if (generation !== generationRef.current) return
         setNode(path, (prev) => ({
           ...prev,
           loading: false,
@@ -200,13 +208,13 @@ export function useFileTree({
   useEffect(() => {
     if (previousKey.current !== versionKey) {
       previousKey.current = versionKey
+      generationRef.current++
       setNodes(new Map())
       const reset = new Set<string>([ROOT])
       for (const ancestor of ancestorChain(initialPath)) {
         reset.add(ancestor)
       }
       setExpanded(reset)
-      knownFilesRef.current = new Map()
       inFlight.current.clear()
       // Reset path: bypass ensureLoaded's cache check (which closes
       // over the pre-reset `nodes` map and would short-circuit because
@@ -225,6 +233,11 @@ export function useFileTree({
     for (const ancestor of ancestorChain(initialPath)) {
       void ensureLoaded(ancestor)
     }
+    // Deliberately keyed on versionKey ALONE: fetchPage/ensureLoaded get
+    // new identities on every nodes write, and re-running this effect on
+    // those would refetch the root after every page load. initialPath is
+    // mount-stable (read once from the URL). The reset branch above
+    // handles every input that genuinely changes the tree's identity.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [versionKey])
 
@@ -307,10 +320,6 @@ export function useFileTree({
     [fetchPage]
   )
 
-  const registerKnownFile = useCallback((file: FileTreeFile) => {
-    knownFilesRef.current.set(file.path, file)
-  }, [])
-
   const visibleKnownChildren = useCallback(
     (path: string): FileTreeItem[] => {
       const out: FileTreeItem[] = []
@@ -342,8 +351,7 @@ export function useFileTree({
     collapse,
     loadMore,
     refresh,
-    registerKnownFile,
-    knownFiles: knownFilesRef.current,
+    ensureLoaded,
     visibleKnownChildren
   }
 }

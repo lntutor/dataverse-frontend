@@ -52,7 +52,8 @@ export function FilesTreeDownloadTray({ api, open, onClose }: FilesTreeDownloadT
   // own dialog earlier. Both still appear in `manifest.txt`.
   else if (isDone && state.verificationFailures.length > 0)
     title = t('tree.download.tray.completeWithVerificationFailures', {
-      defaultValue: 'Download complete — {{count}} file(s) failed checksum verification',
+      defaultValue_one: 'Download complete — {{count}} file failed checksum verification',
+      defaultValue_other: 'Download complete — {{count}} files failed checksum verification',
       count: state.verificationFailures.length
     })
   // The 'error' status is reached only from the IIFE catch in the

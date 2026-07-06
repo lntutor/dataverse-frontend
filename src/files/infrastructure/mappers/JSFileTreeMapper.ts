@@ -135,7 +135,17 @@ export class JSFileTreeMapper {
    */
   static isEndpointMissing(error: unknown): boolean {
     if (error instanceof ReadError) {
-      return /\[(404|405|501)\]/.test(error.message)
+      // A 404 is only "endpoint not deployed" when it is a ROUTE miss.
+      // Dataverse's WebApplicationExceptionHandler maps those to the
+      // stable "API endpoint does not exist on this server" message,
+      // while resource-level 404s (dataset/version not found, draft the
+      // user cannot see) carry their own wording — treating them as
+      // endpoint-missing would silently downgrade a perfectly good
+      // server to the previews fallback and mask the real error.
+      if (/\[404\]/.test(error.message)) {
+        return /API endpoint does not exist/i.test(error.message)
+      }
+      return /\[(405|501)\]/.test(error.message)
     }
     // Defensive: pre-SDK-wrapped axios errors used by the previous
     // implementation. Kept so a transitional state (older browsers /

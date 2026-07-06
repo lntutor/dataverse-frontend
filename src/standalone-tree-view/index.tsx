@@ -24,7 +24,17 @@ import './standalone.scss'
 
 interface MountConfig {
   datasetPid: string
+  /** API-normalised form (`:draft`, `:latest`, `1.2`) for SDK requests. */
   datasetVersionId: string
+  /**
+   * The version value for `file.xhtml` links, kept in the JSF-friendly
+   * form the host page provided (`DRAFT`, `1.2`). JSF's version lookup
+   * does not understand the API's `:draft`/`:latest` tokens — a `:draft`
+   * link on a published dataset silently opens the released version.
+   * `undefined` means "omit &version=" and let file.xhtml pick its
+   * default (latest released).
+   */
+  fileMetadataVersionId: string | undefined
   fileMetadataPath: string
 }
 
@@ -55,9 +65,11 @@ function syntheticVersion(versionId: string): DatasetVersion {
 
 function buildFileMetadataUrlFactory(config: MountConfig) {
   return (file: FileTreeFile): string =>
-    `${config.fileMetadataPath}?fileId=${file.id}&version=${encodeURIComponent(
-      config.datasetVersionId
-    )}`
+    config.fileMetadataVersionId === undefined
+      ? `${config.fileMetadataPath}?fileId=${file.id}`
+      : `${config.fileMetadataPath}?fileId=${file.id}&version=${encodeURIComponent(
+          config.fileMetadataVersionId
+        )}`
 }
 
 // Module-scope state lets us survive PrimeFaces partial updates that
@@ -207,11 +219,22 @@ async function init(opts: { fromObserver?: boolean } = {}) {
   const mountConfig: MountConfig = {
     datasetPid: config.datasetPid,
     datasetVersionId: normaliseVersionId(config.datasetVersionId),
+    fileMetadataVersionId: config.datasetVersionId,
     fileMetadataPath: config.fileMetadataPath ?? '/file.xhtml'
   }
   const treeRepository = new FileTreeJSDataverseRepository()
   const datasetVersion = syntheticVersion(mountConfig.datasetVersionId)
   const buildFileMetadataUrl = buildFileMetadataUrlFactory(mountConfig)
+  // The zip engine fetches downloadUrl outside the SDK, so a
+  // bearer-token embed must repeat its Authorization header there —
+  // session-cookie embeds need nothing (same-origin cookies ride along).
+  const downloadFetchInit =
+    config.bearerToken !== undefined || config.getBearerToken !== undefined
+      ? (): RequestInit | undefined => {
+          const token = config.getBearerToken?.() ?? config.bearerToken
+          return token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
+        }
+      : undefined
 
   root.render(
     <StrictMode>
@@ -230,6 +253,7 @@ async function init(opts: { fromObserver?: boolean } = {}) {
           datasetPersistentId={mountConfig.datasetPid}
           datasetVersion={datasetVersion}
           buildFileMetadataUrl={buildFileMetadataUrl}
+          downloadFetchInit={downloadFetchInit}
         />
       </div>
     </StrictMode>

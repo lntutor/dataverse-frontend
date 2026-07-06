@@ -70,6 +70,16 @@ interface FilesTreeProps {
    * responsible for its own gating in that flow.
    */
   downloadsDisabled?: boolean
+  /**
+   * Extra `fetch` options for the raw per-file download requests made
+   * by the streaming-zip engine. The SDK's listing calls carry their
+   * own auth (session cookie or bearer token via `ApiConfig`), but the
+   * zip engine fetches `downloadUrl` directly — a bearer-token embed
+   * must pass its `Authorization` header here or restricted/draft file
+   * downloads 401 while the listing works. A getter (not a value) so a
+   * rotating token is read fresh at the start of each download run.
+   */
+  downloadFetchInit?: () => RequestInit | undefined
 }
 
 const DEFAULT_ROW_HEIGHT = 32
@@ -88,7 +98,8 @@ export function FilesTree({
   initialPath = '',
   onCurrentPathChange,
   buildFileMetadataUrl,
-  downloadsDisabled = false
+  downloadsDisabled = false,
+  downloadFetchInit
 }: FilesTreeProps) {
   const { t } = useTranslation('files')
   const tree = useFileTree({
@@ -136,10 +147,10 @@ export function FilesTree({
       // removed because it lost the per-part resume on large files and
       // forked the UX.
       const zipName = `${datasetPersistentId.replace(/[^a-zA-Z0-9._-]+/g, '_')}-files.zip`
-      streamingZip.start({ files, zipName })
+      streamingZip.start({ files, zipName, fetchInit: downloadFetchInit?.() })
       setTrayOpen(true)
     },
-    [datasetPersistentId, streamingZip]
+    [datasetPersistentId, streamingZip, downloadFetchInit]
   )
 
   const download = useFileTreeDownload({
@@ -208,18 +219,27 @@ export function FilesTree({
   // Auto-load: whenever a "load-more" row enters the rendered slice and the
   // corresponding folder is not already loading, trigger loadMore. The
   // explicit button stays as a fallback (and a focus target) but the
-  // common case is now infinite-scroll-style.
+  // common case is now infinite-scroll-style. A folder in the error state
+  // is excluded: its cursor survives the failure, so without the guard the
+  // error write itself re-triggers this effect and the fetch loops with no
+  // backoff — after a failure, loading more is the retry button's job.
+  // A "loading" row for a node that has no entry yet is a folder the
+  // filter query force-opened without the user ever expanding it — nothing
+  // else fetches those, so service them here.
   useEffect(() => {
     for (const row of slice) {
       if (row.kind === 'load-more') {
         const node = tree.nodes.get(row.path)
-        if (node?.nextCursor && !node.loading) {
+        if (node?.nextCursor && !node.loading && !node.error) {
           void tree.loadMore(row.path)
         }
+      } else if (row.kind === 'loading' && !tree.nodes.get(row.path)) {
+        void tree.ensureLoaded(row.path)
       }
     }
-    // tree.nodes / tree.loadMore are stable callbacks; depending on `slice`
-    // is enough to re-evaluate when the visible range changes.
+    // Depending on `slice` alone is deliberate: tree.nodes/loadMore get new
+    // identities on every page write, and re-running on those would fire
+    // duplicate loadMore calls for rows the guard has already dispatched.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slice])
 
@@ -432,29 +452,27 @@ export function FilesTree({
     ]
   )
 
-  // Header select-all state + handler. Must live above the early
-  // returns so the hook count stays stable when the component swaps
-  // between loading / error / empty / loaded states. The state value
-  // is recomputed each render (cheap), so we stash it on a ref the
-  // JSX below reads — that way we don't add a useMemo + churn.
-  const headerSelectAllStateRef = useRef<SelectionState>('none')
-  {
+  // Header select-all state: a plain per-render computation (cheap, no
+  // hook), so it is safe above the early returns without affecting the
+  // hook count when the component swaps between loading / error /
+  // empty / loaded states.
+  const headerSelectAllState: SelectionState = (() => {
     const totalCount = selection.totals.count
     const hasFolders = selection.totals.hasLogicalFolders
     const topLevel = tree.rootNode.items
     if (totalCount === 0 && !hasFolders) {
-      headerSelectAllStateRef.current = 'none'
-    } else if (topLevel.length === 0) {
-      headerSelectAllStateRef.current = 'partial'
-    } else {
-      const everyTopSelected = topLevel.every((item) =>
-        isFileTreeFile(item)
-          ? selection.fileState(item) === 'all'
-          : selection.folderState(item, tree.visibleKnownChildren(item.path)) === 'all'
-      )
-      headerSelectAllStateRef.current = everyTopSelected ? 'all' : 'partial'
+      return 'none'
     }
-  }
+    if (topLevel.length === 0) {
+      return 'partial'
+    }
+    const everyTopSelected = topLevel.every((item) =>
+      isFileTreeFile(item)
+        ? selection.fileState(item) === 'all'
+        : selection.folderState(item, tree.visibleKnownChildren(item.path)) === 'all'
+    )
+    return everyTopSelected ? 'all' : 'partial'
+  })()
   const onToggleSelectAll = useCallback(() => {
     selection.toggleAll(tree.rootNode.items)
   }, [selection, tree.rootNode.items])
@@ -543,7 +561,7 @@ export function FilesTree({
         disableDownload={downloadsDisabled}
       />
       <FilesTreeHeader
-        selectAllState={headerSelectAllStateRef.current}
+        selectAllState={headerSelectAllState}
         onToggleSelectAll={onToggleSelectAll}
       />
       <div
@@ -563,7 +581,7 @@ export function FilesTree({
             if (row.kind === 'loading') {
               return (
                 <RowMessage
-                  key={`loading-${row.path}-${absoluteIndex}`}
+                  key={`loading-${row.path}`}
                   top={top}
                   height={rowHeight}
                   depth={row.depth}
@@ -575,7 +593,7 @@ export function FilesTree({
             if (row.kind === 'error') {
               return (
                 <RowMessage
-                  key={`error-${row.path}-${absoluteIndex}`}
+                  key={`error-${row.path}`}
                   top={top}
                   height={rowHeight}
                   depth={row.depth}
@@ -594,7 +612,7 @@ export function FilesTree({
               const node = tree.nodes.get(row.path)
               return (
                 <RowMessage
-                  key={`load-more-${row.path}-${absoluteIndex}`}
+                  key={`load-more-${row.path}`}
                   top={top}
                   height={rowHeight}
                   depth={row.depth + 1}
@@ -617,7 +635,7 @@ export function FilesTree({
             const expanded = isFileTreeFolder(item) ? tree.expanded.has(item.path) : undefined
             return (
               <FilesTreeRow
-                key={`${row.kind}-${item.path}-${absoluteIndex}`}
+                key={`${row.kind}-${item.path}`}
                 top={top}
                 height={rowHeight}
                 depth={row.depth}

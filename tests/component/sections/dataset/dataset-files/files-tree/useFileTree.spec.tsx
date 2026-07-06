@@ -312,9 +312,13 @@ describe('useFileTree', () => {
     )
   })
 
-  it('registerKnownFile populates knownFiles', () => {
-    const root = FileTreePageMother.create({ path: '', items: [] })
-    const repo = new FakeRepo({ '': [root] })
+  it('ensureLoaded fetches a never-loaded folder and dedupes concurrent calls', async () => {
+    const rootPage = FileTreePageMother.create({ path: '', items: [] })
+    const auxPage = FileTreePageMother.create({
+      path: 'aux',
+      items: [FileTreeFileMother.create({ id: 99, name: 'side.txt', path: 'aux/side.txt' })]
+    })
+    const repo = new FakeRepo({ '': [rootPage], aux: [auxPage] })
 
     const { result } = renderHook(() =>
       useFileTree({
@@ -323,12 +327,23 @@ describe('useFileTree', () => {
         datasetVersion
       })
     )
+    await waitFor(() => expect(result.current.rootNode.loaded).to.equal(true))
 
-    const file = FileTreeFileMother.create({ id: 99, name: 'side.txt', path: 'aux/side.txt' })
-    act(() => {
-      result.current.registerKnownFile(file)
+    await act(async () => {
+      // Two concurrent calls must coalesce into one fetch.
+      await Promise.all([result.current.ensureLoaded('aux'), result.current.ensureLoaded('aux')])
     })
-    expect(result.current.knownFiles.get('aux/side.txt')).to.deep.equal(file)
+    expect(result.current.nodes.get('aux')?.items.map((i) => i.path)).to.deep.equal([
+      'aux/side.txt'
+    ])
+    const auxCalls = () => repo.calls.filter((c) => c.path === 'aux').length
+    expect(auxCalls()).to.equal(1)
+
+    await act(async () => {
+      // Already loaded: resolves without another fetch.
+      await result.current.ensureLoaded('aux')
+    })
+    expect(auxCalls()).to.equal(1)
   })
 
   it('initialPath expands every ancestor', async () => {

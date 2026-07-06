@@ -182,7 +182,23 @@ export function useStreamingZipDownload(): StreamingZipApi {
   }, [])
 
   const close = useCallback(() => {
-    cancelledRef.current = false
+    const status = stateRef.current.status
+    if (
+      status === 'preparing' ||
+      status === 'running' ||
+      status === 'paused' ||
+      status === 'awaiting-retry'
+    ) {
+      // Closing the tray mid-run means cancel: stop the engine and
+      // unblock any pending pause/awaiting-retry decision so the
+      // suspended generator can wind down instead of leaking.
+      cancelledRef.current = true
+      decisionRef.current?.resolve('cancel')
+    }
+    // Deliberately NOT resetting cancelledRef here — the pending
+    // blob promise of a cancelled run may still settle after close,
+    // and the pre-save guard must keep seeing the cancellation.
+    // start() resets the flag for the next run.
     decisionRef.current = null
     setState(initialState)
     stateRef.current = initialState
@@ -415,6 +431,21 @@ export function useStreamingZipDownload(): StreamingZipApi {
               status: 'running'
             }))
             yield* processQueue()
+            // Files that failed AGAIN in the second pass would otherwise
+            // vanish: this gate is not re-entered, so without demotion
+            // the run ends 'done' with the file absent from both the zip
+            // and manifest.txt. Demote the survivors to skipped so the
+            // manifest keeps its contract of listing every omission.
+            const survivors = stateRef.current.failedSoFar.filter((f) => f.recoverable)
+            if (survivors.length > 0) {
+              for (const f of survivors) skippedManifest.push({ ...f, recoverable: false })
+              update((prev) => ({
+                ...prev,
+                failedSoFar: prev.failedSoFar.map((f) =>
+                  f.recoverable ? { ...f, recoverable: false } : f
+                )
+              }))
+            }
           }
         }
 

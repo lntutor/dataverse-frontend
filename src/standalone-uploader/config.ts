@@ -45,8 +45,10 @@ export interface DvUploaderConfig {
    * Per-request bearer-token getter. Consulted on every API call, so
    * returning a freshly-refreshed token transparently rotates auth
    * without remounting the bundle. Return `null`/`undefined` to fall
-   * through to `bearerToken` (or to session-cookie auth if neither is
-   * set).
+   * through to the static `bearerToken`. Note: providing either bearer
+   * option locks the bundle to bearer auth at mount time — there is no
+   * per-request fallthrough to session-cookie auth; that mode applies
+   * only when BOTH options are omitted.
    */
   getBearerToken?: () => string | null | undefined
   /** Locale code for translations. Default: 'en' */
