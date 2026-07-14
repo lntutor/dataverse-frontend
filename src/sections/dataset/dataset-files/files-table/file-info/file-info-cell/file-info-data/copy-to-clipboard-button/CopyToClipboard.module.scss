@@ -5,6 +5,12 @@
   align-items: center;
   margin: 0 3px;
   cursor: pointer;
+
+  &.disabled {
+    cursor: default;
+    opacity: 0.5;
+    pointer-events: none;
+  }
 }
 
 %icon {

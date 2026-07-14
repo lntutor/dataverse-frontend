@@ -1,26 +1,45 @@
+import { useMemo, useState } from 'react'
+import cn from 'classnames'
 import { FormattedCitation } from '@/dataset/domain/models/DatasetCitation'
 import { CopyToClipboardButton } from '@/sections/dataset/dataset-files/files-table/file-info/file-info-cell/file-info-data/copy-to-clipboard-button/CopyToClipboardButton'
-import { Button, Form, Modal, Stack } from '@iqss/dataverse-design-system'
+import { Alert, Button, Form, Modal, Spinner, Stack } from '@iqss/dataverse-design-system'
 import { useTranslation } from 'react-i18next'
+import { Utils } from '@/shared/helpers/Utils'
 import styles from '../Citation.module.scss'
+import { buildCslStyleOptions, DEFAULT_CSL_STYLE_SLUG } from './csl/cslStyleOptions'
+import { useStyledCitation, StyledCitationSeed } from './csl/useStyledCitation'
+import { CslJsonItem } from './csl/citeprocEngine'
 
 interface ViewStyledCitationModalProps {
   show: boolean
   handleClose: () => void
   citation: FormattedCitation | null
+  defaultStyleCitationSeed?: StyledCitationSeed | null
 }
 
 export const ViewStyledCitationModal = ({
   show,
   handleClose,
-  citation
+  citation,
+  defaultStyleCitationSeed
 }: ViewStyledCitationModalProps) => {
   const { t } = useTranslation('shared', { keyPrefix: 'downloadCitation' })
   const { t: tShared } = useTranslation('shared')
   const modalTitle = t('styledCitation')
-  //TODO: Implement more CSL Style and its corresponding parsing logic
+  const [selectedStyleSlug, setSelectedStyleSlug] = useState(DEFAULT_CSL_STYLE_SLUG)
 
-  const parsedCitationContent = parse(citation?.content || '')
+  const cslStyleOptions = useMemo(
+    () => buildCslStyleOptions(t('commonStyles'), t('moreStyles')),
+    [t]
+  )
+  const cslJsonItem = useMemo(() => parseCslJsonItem(citation), [citation])
+  const { citationHtml, isLoading, error } = useStyledCitation(
+    cslJsonItem,
+    selectedStyleSlug,
+    defaultStyleCitationSeed
+  )
+  const plainTextCitation = citationHtml ? Utils.htmlToPlainText(citationHtml) : ''
+
   return (
     <Modal show={show} onHide={handleClose} centered ariaLabel={modalTitle}>
       <Modal.Header>
@@ -29,16 +48,33 @@ export const ViewStyledCitationModal = ({
       <Modal.Body>
         <Form>
           <Form.Group.Label htmlFor="cslStyle">{t('selectCSLStyle')}</Form.Group.Label>
-          <Form.Group.Select id="cslStyle" name="cslStyle">
-            <option value="chicago-author-date">Chicago-Author-Date</option>
-            {/* Add more CSL styles as needed */}
-          </Form.Group.Select>
-          <Form.Group.Label htmlFor="citationContent">
-            {t('citationInStyle', { styleName: 'Chicago-Author-Date' })}
+          <Form.Group.SelectAdvanced
+            inputButtonId="cslStyle"
+            options={cslStyleOptions}
+            isSearchable
+            hidePlaceholderOption
+            isDisabled={isLoading}
+            defaultValue={selectedStyleSlug}
+            onChange={setSelectedStyleSlug}
+          />
+          <Form.Group.Label htmlFor="citationContent" className={styles['citationStyleLabel']}>
+            {t('citationInStyle', { styleName: selectedStyleSlug })}
           </Form.Group.Label>
           <Stack direction="horizontal" gap={1}>
-            <p className={styles['styledCitationBox']}>{parsedCitationContent}</p>
-            <CopyToClipboardButton text={parsedCitationContent} showTruncateText={false} />
+            <p className={cn('form-control', styles['styledCitationBox'])}>
+              {isLoading && <Spinner variant="info" size="sm" />}
+              {!isLoading && error && <Alert variant="danger">{t('styleFormatError')}</Alert>}
+              {!isLoading && !error && (
+                <span dangerouslySetInnerHTML={{ __html: citationHtml ?? '' }} />
+              )}
+            </p>
+            <CopyToClipboardButton
+              text={plainTextCitation}
+              showTruncateText={false}
+              tooltipText={t('copyCitationToClipboard')}
+              iconSize={24}
+              disabled={isLoading || !!error}
+            />
           </Stack>
         </Form>
       </Modal.Body>
@@ -51,6 +87,13 @@ export const ViewStyledCitationModal = ({
   )
 }
 
-export function parse(citation: string): string {
-  return citation.replace(/<[^>]+>/g, '')
+function parseCslJsonItem(citation: FormattedCitation | null): CslJsonItem | null {
+  if (!citation) {
+    return null
+  }
+  try {
+    return JSON.parse(citation.content) as CslJsonItem
+  } catch {
+    return null
+  }
 }

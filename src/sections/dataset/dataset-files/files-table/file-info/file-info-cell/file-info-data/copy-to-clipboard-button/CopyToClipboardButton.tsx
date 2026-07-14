@@ -6,14 +6,21 @@ import { useTranslation } from 'react-i18next'
 
 export function CopyToClipboardButton({
   text,
-  showTruncateText = true
+  showTruncateText = true,
+  tooltipText,
+  iconSize,
+  disabled = false
 }: {
   text: string
   showTruncateText?: boolean
+  tooltipText?: string
+  iconSize?: string | number
+  disabled?: boolean
 }) {
   const { t } = useTranslation('files')
   const [copied, setCopied] = useState(false)
   const copyToClipboard = () => {
+    if (disabled) return
     navigator.clipboard
       .writeText(text)
       .then(() => {
@@ -26,18 +33,28 @@ export function CopyToClipboardButton({
       })
   }
 
+  const tooltipOverlay = disabled
+    ? ''
+    : tooltipText ?? `${t('table.copyToClipboard.clickToCopy')} ${text}`
+
   return (
-    <Tooltip placement="top" overlay={`${t('table.copyToClipboard.clickToCopy')} ${text}`}>
-      <span onClick={copyToClipboard} className={styles.container} role="button">
+    <Tooltip placement="top" overlay={tooltipOverlay}>
+      <span
+        onClick={copyToClipboard}
+        className={disabled ? `${styles.container} ${styles.disabled}` : styles.container}
+        role="button"
+        aria-disabled={disabled}>
         {showTruncateText && truncateText(text)}
         {copied ? (
           <Check
+            size={iconSize}
             className={styles.check}
             role="img"
             title={t('table.copyToClipboard.correctlyCopiedIcon')}
           />
         ) : (
           <ClipboardPlusFill
+            size={iconSize}
             role="img"
             title={t('table.copyToClipboard.copyToClipboardIcon')}
             className={styles.clipboard}

@@ -27,6 +27,17 @@ describe('CopyToClipboardButton', () => {
     cy.findByText('Click to copy Sample text to copy').should('exist')
   })
 
+  it('shows a custom tooltip when tooltipText is provided', () => {
+    const textToCopy = 'Sample text to copy'
+    cy.customMount(
+      <CopyToClipboardButton text={textToCopy} tooltipText="Copy citation to clipboard" />
+    )
+
+    cy.findByRole('button', { name: /Copy to clipboard icon/ }).trigger('mouseover')
+    cy.findByText('Copy citation to clipboard').should('exist')
+    cy.findByText(`Click to copy ${textToCopy}`).should('not.exist')
+  })
+
   it('truncates text when it is too long', () => {
     const textToCopy = '0187a54071542738aa47939e8218e5f2'
     cy.customMount(<CopyToClipboardButton text={textToCopy} />)

@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { Fragment, useId } from 'react'
 import { Dropdown as DropdownBS, Form as FormBS } from 'react-bootstrap'
 import { Option } from './SelectAdvanced'
 import styles from './SelectAdvanced.module.scss'
@@ -16,6 +16,7 @@ interface SelectAdvancedMenuProps {
   isSearchable: boolean
   menuId: string
   selectWord: string
+  hidePlaceholderOption: boolean
 }
 
 export const SelectAdvancedMenu = (props: SelectAdvancedMenuProps) => {
@@ -31,7 +32,8 @@ export const SelectAdvancedMenu = (props: SelectAdvancedMenuProps) => {
     handleClickOption,
     isSearchable,
     menuId,
-    selectWord
+    selectWord,
+    hidePlaceholderOption
   } = props
 
   const searchInputControlID = useId()
@@ -40,6 +42,7 @@ export const SelectAdvancedMenu = (props: SelectAdvancedMenuProps) => {
 
   const menuOptions = filteredOptions.length > 0 ? filteredOptions : options
   const noOptionsFound = searchValue !== '' && filteredOptions.length === 0
+  const showGroupHeaders = filteredOptions.length === 0
 
   const selectedArray = Array.isArray(selected) ? selected : [selected]
   const allOptionsShownAreSelected = !noOptionsFound
@@ -85,7 +88,7 @@ export const SelectAdvancedMenu = (props: SelectAdvancedMenuProps) => {
         </DropdownBS.Header>
       )}
 
-      {!isMultiple && searchValue === '' && (
+      {!isMultiple && !hidePlaceholderOption && searchValue === '' && (
         <DropdownBS.Item
           as="li"
           role="option"
@@ -100,40 +103,55 @@ export const SelectAdvancedMenu = (props: SelectAdvancedMenuProps) => {
       )}
 
       {!noOptionsFound &&
-        menuOptions.map((opt) => {
+        menuOptions.map((opt, index) => {
+          const previousGroup = index > 0 ? menuOptions[index - 1].group : undefined
+          const groupHeader =
+            showGroupHeaders && opt.group !== undefined && opt.group !== previousGroup ? (
+              <DropdownBS.Header
+                as="li"
+                key={`group-${opt.group}`}
+                className={styles['option-group-header']}>
+                {opt.group}
+              </DropdownBS.Header>
+            ) : null
+
           if (!isMultiple) {
             return (
-              <DropdownBS.Item
-                as="li"
-                role="option"
-                data-value={opt.value}
-                id={`${optionLabelId}-${opt.value}`}
-                className={styles['option-item-not-multiple']}
-                onClick={() => handleClickOption(opt.value)}
-                active={selected === opt.value}
-                key={opt.value}>
-                {opt.label}
-              </DropdownBS.Item>
+              <Fragment key={opt.value}>
+                {groupHeader}
+                <DropdownBS.Item
+                  as="li"
+                  role="option"
+                  data-value={opt.value}
+                  id={`${optionLabelId}-${opt.value}`}
+                  className={styles['option-item-not-multiple']}
+                  onClick={() => handleClickOption(opt.value)}
+                  active={selected === opt.value}>
+                  {opt.label}
+                </DropdownBS.Item>
+              </Fragment>
             )
           }
 
           return (
-            <DropdownBS.Item
-              as="li"
-              className={styles['option-item']}
-              role="option"
-              data-value={opt.value}
-              key={opt.value}>
-              <FormBS.Check
-                type="checkbox"
-                value={opt.value}
-                label={opt.label}
-                onChange={handleCheck}
-                id={`${optionLabelId}-${opt.value}`}
-                checked={selectedArray.includes(opt.value)}
-                className={styles['option-item__checkbox-input']}
-              />
-            </DropdownBS.Item>
+            <Fragment key={opt.value}>
+              {groupHeader}
+              <DropdownBS.Item
+                as="li"
+                className={styles['option-item']}
+                role="option"
+                data-value={opt.value}>
+                <FormBS.Check
+                  type="checkbox"
+                  value={opt.value}
+                  label={opt.label}
+                  onChange={handleCheck}
+                  id={`${optionLabelId}-${opt.value}`}
+                  checked={selectedArray.includes(opt.value)}
+                  className={styles['option-item__checkbox-input']}
+                />
+              </DropdownBS.Item>
+            </Fragment>
           )
         })}
 
