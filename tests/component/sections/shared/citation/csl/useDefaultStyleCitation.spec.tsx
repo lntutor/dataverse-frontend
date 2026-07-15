@@ -130,4 +130,34 @@ describe('useDefaultStyleCitation', () => {
       CitationFormat.CSLJson
     )
   })
+
+  it('does not update state after it is unmounted while fetching', () => {
+    let resolveCitation: ((citation: FormattedCitation) => void) | undefined
+    datasetRepository.getDatasetCitationInOtherFormats = cy.stub().returns(
+      new Promise<FormattedCitation>((resolve) => {
+        resolveCitation = resolve
+      })
+    )
+
+    const { result, unmount } = renderHook(() =>
+      useDefaultStyleCitation({ datasetRepository, datasetId: 'test-dataset', version: '1.0' })
+    )
+
+    expect(result.current.isFetching).to.equal(true)
+
+    cy.then(async () => {
+      await Promise.resolve()
+      expect(datasetRepository.getDatasetCitationInOtherFormats).to.have.been.calledOnce
+      expect(resolveCitation).not.to.equal(undefined)
+
+      unmount()
+      resolveCitation?.(mockCitation)
+      await Promise.resolve()
+
+      expect(result.current.cslJsonCitation).to.equal(null)
+      expect(result.current.defaultStyleCitationHtml).to.equal(null)
+      expect(result.current.defaultStyleCitationText).to.equal('')
+      expect(result.current.isFetching).to.equal(true)
+    })
+  })
 })

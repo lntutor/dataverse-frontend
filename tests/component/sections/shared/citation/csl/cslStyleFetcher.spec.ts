@@ -1,4 +1,5 @@
 import {
+  clearCslCachesForTests,
   getResolvedStyleXml,
   getLocaleXml,
   CslStyleResolutionError,
@@ -7,6 +8,8 @@ import {
 } from '@/sections/shared/citation/citation-download/csl/cslStyleFetcher'
 
 describe('cslStyleFetcher', () => {
+  beforeEach(() => clearCslCachesForTests())
+
   it('resolves an independent style directly', () => {
     cy.intercept('GET', `${CSL_STYLES_BASE_URL}/independent-style-a.csl`, {
       fixture: 'citation/test-style.csl'
@@ -69,8 +72,57 @@ describe('cslStyleFetcher', () => {
       fixture: 'citation/locales-en-US.xml'
     }).as('getLocale')
 
-    cy.then(() => getLocaleXml('en-US')).then((xml) => {
-      expect(xml).to.include('xml:lang="en-US"')
+    cy.then(() => getLocaleXml('en-US'))
+      .then((xml) => {
+        expect(xml).to.include('xml:lang="en-US"')
+      })
+      .then(() => getLocaleXml())
+      .then(() => cy.get('@getLocale.all').should('have.length', 1))
+  })
+
+  it('fetches the locale again after the caches are cleared', () => {
+    cy.intercept('GET', `${CSL_LOCALES_BASE_URL}/locales-en-US.xml`, {
+      fixture: 'citation/locales-en-US.xml'
+    }).as('getLocaleAfterClear')
+
+    cy.then(() => getLocaleXml())
+      .then(() => {
+        clearCslCachesForTests()
+        return getLocaleXml()
+      })
+      .then(() => cy.get('@getLocaleAfterClear.all').should('have.length', 2))
+  })
+
+  it('throws when an independent style request fails with a non-404 response', () => {
+    cy.intercept('GET', `${CSL_STYLES_BASE_URL}/unavailable-style.csl`, { statusCode: 500 })
+
+    cy.then(() =>
+      getResolvedStyleXml('unavailable-style').then(
+        () => Promise.reject(new Error('expected the style request to fail')),
+        (error: unknown) => error
+      )
+    ).then((error) => {
+      expect(error).to.be.instanceOf(Error)
+      expect((error as Error).message).to.include('500')
+    })
+  })
+
+  it('throws when the dependent style request fails', () => {
+    cy.intercept('GET', `${CSL_STYLES_BASE_URL}/missing-dependent-style.csl`, {
+      statusCode: 404
+    })
+    cy.intercept('GET', `${CSL_STYLES_BASE_URL}/dependent/missing-dependent-style.csl`, {
+      statusCode: 503
+    })
+
+    cy.then(() =>
+      getResolvedStyleXml('missing-dependent-style').then(
+        () => Promise.reject(new Error('expected the dependent style request to fail')),
+        (error: unknown) => error
+      )
+    ).then((error) => {
+      expect(error).to.be.instanceOf(Error)
+      expect((error as Error).message).to.include('503')
     })
   })
 })

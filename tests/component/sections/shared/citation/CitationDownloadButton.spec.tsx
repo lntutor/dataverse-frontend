@@ -202,6 +202,38 @@ describe('CitationDownloadButton', () => {
     cy.findByRole('dialog').should('exist')
   })
 
+  it('keeps the modal loading when no citation has been provided yet', () => {
+    cy.customMount(<ViewStyledCitationModal show handleClose={() => {}} citation={null} />)
+
+    cy.findByRole('dialog').should('exist')
+    cy.findByLabelText('Toggle options menu').should('be.disabled')
+    cy.findByRole('button', { name: /Copy to clipboard icon/ }).should(
+      'have.attr',
+      'aria-disabled',
+      'true'
+    )
+    cy.get('[role="status"]').should('exist')
+  })
+
+  it('handles malformed CSL-JSON without trying to format or copy it', () => {
+    const malformedCitation: FormattedCitation = {
+      content: '{not valid json',
+      contentType: 'application/json'
+    }
+
+    cy.customMount(
+      <ViewStyledCitationModal show handleClose={() => {}} citation={malformedCitation} />
+    )
+
+    cy.findByLabelText('Toggle options menu').should('be.disabled')
+    cy.findByRole('button', { name: /Copy to clipboard icon/ }).should(
+      'have.attr',
+      'aria-disabled',
+      'true'
+    )
+    cy.get('[role="status"]').should('exist')
+  })
+
   it('groups CSL styles into Common Styles and More Styles sections', () => {
     cy.customMount(
       <ViewStyledCitationModal show={true} handleClose={() => {}} citation={mockCitation} />

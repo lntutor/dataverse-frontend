@@ -128,4 +128,27 @@ describe('useStyledCitation', () => {
       })
     })
   })
+
+  it('does not update state after it is unmounted while formatting', () => {
+    cy.intercept('GET', `${CSL_STYLES_BASE_URL}/slow-style.csl`, {
+      fixture: 'citation/test-style.csl',
+      delay: 100
+    })
+    cy.intercept('GET', `${CSL_LOCALES_BASE_URL}/locales-en-US.xml`, {
+      fixture: 'citation/locales-en-US.xml',
+      delay: 100
+    })
+
+    cy.then(async () => {
+      const { result, unmount } = renderHook(() => useStyledCitation(cslJsonItem, 'slow-style'))
+
+      expect(result.current.isLoading).to.equal(true)
+      unmount()
+
+      await new Promise((resolve) => setTimeout(resolve, 200))
+      expect(result.current.isLoading).to.equal(true)
+      expect(result.current.citationHtml).to.equal(null)
+      expect(result.current.error).to.equal(false)
+    })
+  })
 })

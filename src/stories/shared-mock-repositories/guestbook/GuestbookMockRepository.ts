@@ -34,7 +34,9 @@ export const storybookClientGuestbooks: JSDataverseGuestbook[] = [
     positionRequired: storybookGuestbook.positionRequired,
     createTime: storybookGuestbook.createTime,
     dataverseId: storybookGuestbook.dataverseId,
-    customQuestions: storybookGuestbook.customQuestions
+    customQuestions: storybookGuestbook.customQuestions.map(({ id, ...question }) =>
+      typeof id === 'number' ? { ...question, id } : question
+    )
   }
 ]
 
