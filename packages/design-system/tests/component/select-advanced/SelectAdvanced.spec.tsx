@@ -195,7 +195,7 @@ describe('SelectAdvanced', () => {
 
       toggleOptionsMenu()
 
-      cy.findByText('Select...').should('exist')
+      cy.findAllByText('Select...').should('exist')
       cy.findAllByRole('option').should('have.length', 4)
     })
   })
