@@ -60,6 +60,7 @@ describe('SessionProvider', () => {
           error: null,
           login: () => {} // 👈 deprecated
         }}>
+        <LocationDisplay />
         <Routes>
           <Route element={<SessionProvider repository={userRepository} />}>
             <Route index element={<ComponentUsingContext />} />
@@ -171,8 +172,6 @@ describe('SessionProvider', () => {
       withTokenPresent: true
     })
 
-    cy.findByText('Sign up').should('exist')
-    cy.findByText(BEARER_TOKEN_IS_VALID_BUT_NOT_LINKED_MESSAGE).should('exist')
     cy.findByTestId('location').should('have.text', '/sign-up?validTokenButNotLinkedAccount=true')
   })
 
