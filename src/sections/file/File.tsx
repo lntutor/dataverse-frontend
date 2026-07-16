@@ -48,7 +48,7 @@ export function File({
   const { setIsLoading } = useLoading()
   const { t } = useTranslation('file')
   const { file, isLoading } = useFile(repository, id, datasetVersionNumber)
-  const { externalTools, externalToolsRepository } = useExternalTools()
+  const { externalTools } = useExternalTools()
   const [activeTab, setActiveTab] = useState<string>(
     toolTypeSelectedQueryParam && file?.permissions.canDownloadFile
       ? FilePageHelper.EXT_TOOL_TAB_KEY
@@ -198,7 +198,6 @@ export function File({
                     applicableTools={fileApplicablePreviewOrQueryTools}
                     toolTypeSelectedQueryParam={toolTypeSelectedQueryParam}
                     isInView={activeTab === FilePageHelper.EXT_TOOL_TAB_KEY}
-                    externalToolsRepository={externalToolsRepository}
                   />
                 </div>
               </Tabs.Tab>

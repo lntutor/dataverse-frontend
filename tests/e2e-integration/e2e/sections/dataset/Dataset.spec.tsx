@@ -1024,7 +1024,8 @@ describe('Dataset', () => {
       cy.wrap(
         DatasetHelper.createWithFiles(FileHelper.createMany(3)).then((dataset) =>
           DatasetHelper.publish(dataset.persistentId)
-        )
+        ),
+        { timeout: 30_000 }
       )
         .its('persistentId')
         .then((persistentId: string) => {

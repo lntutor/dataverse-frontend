@@ -8,6 +8,7 @@ import {
   clearCslCachesForTests
 } from '@/sections/shared/citation/citation-download/csl/cslStyleFetcher'
 import { WithRepositories } from '@tests/component/WithRepositories'
+import i18next from '@/i18n'
 
 const datasetRepository: DatasetRepository = {} as DatasetRepository
 const mockCitation: FormattedCitation = {
@@ -17,10 +18,11 @@ const mockCitation: FormattedCitation = {
 
 describe('CitationDownloadButton', () => {
   beforeEach(() => {
-    // Mock URL.createObjectURL and URL.revokeObjectURL
+    cy.wrap(i18next.loadNamespaces('files'))
+
     cy.window().then((win) => {
-      cy.stub(win.URL, 'createObjectURL').returns('mock-url')
-      cy.stub(win.URL, 'revokeObjectURL')
+      cy.stub(win.URL, 'createObjectURL').as('createObjectURL').returns('mock-url')
+      cy.stub(win.URL, 'revokeObjectURL').as('revokeObjectURL')
     })
 
     clearCslCachesForTests()
@@ -58,10 +60,8 @@ describe('CitationDownloadButton', () => {
         'EndNote'
       )
     })
-    cy.window().then((win) => {
-      expect(win.URL['createObjectURL']).to.have.been.called
-      expect(win.URL['revokeObjectURL']).to.have.been.called
-    })
+    cy.get('@createObjectURL').should('have.been.called')
+    cy.get('@revokeObjectURL').should('have.been.called')
   })
 
   it('downloads RIS citation and triggers file download', () => {
@@ -83,9 +83,7 @@ describe('CitationDownloadButton', () => {
         'RIS'
       )
     })
-    cy.window().then((win) => {
-      expect(win.URL['createObjectURL']).to.have.been.called
-    })
+    cy.get('@createObjectURL').should('have.been.called')
   })
 
   it('downloads BibTeX citation and creates download link', () => {
@@ -108,10 +106,8 @@ describe('CitationDownloadButton', () => {
       )
     })
 
-    cy.window().then((win) => {
-      expect(win.URL['createObjectURL']).to.have.been.called
-      expect(win.URL['revokeObjectURL']).to.have.been.called
-    })
+    cy.get('@createObjectURL').should('have.been.called')
+    cy.get('@revokeObjectURL').should('have.been.called')
   })
 
   it('verifies correct filename is used for download', () => {
@@ -312,7 +308,7 @@ describe('CitationDownloadButton', () => {
     cy.findByText('View Styled Citation').click()
 
     cy.findByRole('dialog').should('exist')
-    cy.findByRole('button', { name: /close/i }).click()
+    cy.findByRole('button', { name: 'Cancel' }).click()
     cy.findByRole('dialog').should('not.exist')
   })
 
