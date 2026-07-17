@@ -15,7 +15,8 @@ export interface StyledCitationSeed {
 export function useStyledCitation(
   cslJsonItem: CslJsonItem | null,
   styleSlug: string,
-  seed?: StyledCitationSeed | null
+  seed?: StyledCitationSeed | null,
+  isCitationLoading = false
 ): UseStyledCitationResult {
   const [citationHtml, setCitationHtml] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -24,8 +25,8 @@ export function useStyledCitation(
   useEffect(() => {
     if (!cslJsonItem) {
       setCitationHtml(null)
-      setError(false)
-      setIsLoading(true)
+      setError(!isCitationLoading)
+      setIsLoading(isCitationLoading)
       return
     }
 
@@ -60,7 +61,7 @@ export function useStyledCitation(
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cslJsonItem, styleSlug, seed?.styleSlug, seed?.html])
+  }, [cslJsonItem, styleSlug, seed?.styleSlug, seed?.html, isCitationLoading])
 
   return { citationHtml, isLoading, error }
 }

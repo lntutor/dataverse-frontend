@@ -23,7 +23,7 @@ export function CitationDownloadButton({ datasetId, version }: CitationDownloadP
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [styledCitation, setStyledCitation] = useState<FormattedCitation | null>(null)
 
-  const { error, handleGetCitation, handleDownloadCitation } = useDownloadCitation({
+  const { isLoading, error, handleGetCitation, handleDownloadCitation } = useDownloadCitation({
     datasetRepository,
     datasetId,
     version
@@ -83,6 +83,7 @@ export function CitationDownloadButton({ datasetId, version }: CitationDownloadP
         show={isModalOpen}
         handleClose={handleCloseModal}
         citation={styledCitation}
+        isCitationLoading={isLoading}
         defaultStyleCitationSeed={
           defaultStyleCitationHtml
             ? { styleSlug: DEFAULT_CSL_STYLE_SLUG, html: defaultStyleCitationHtml }

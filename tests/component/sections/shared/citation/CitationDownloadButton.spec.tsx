@@ -198,8 +198,10 @@ describe('CitationDownloadButton', () => {
     cy.findByRole('dialog').should('exist')
   })
 
-  it('keeps the modal loading when no citation has been provided yet', () => {
-    cy.customMount(<ViewStyledCitationModal show handleClose={() => {}} citation={null} />)
+  it('keeps the modal loading while its citation is being fetched', () => {
+    cy.customMount(
+      <ViewStyledCitationModal show handleClose={() => {}} citation={null} isCitationLoading />
+    )
 
     cy.findByRole('dialog').should('exist')
     cy.findByLabelText('Toggle options menu').should('be.disabled')
@@ -227,7 +229,28 @@ describe('CitationDownloadButton', () => {
       'aria-disabled',
       'true'
     )
-    cy.get('[role="status"]').should('exist')
+    cy.get('[role="status"]').should('not.exist')
+    cy.contains('An error occurred while formatting the citation in the selected style').should(
+      'exist'
+    )
+  })
+
+  it('sanitizes formatted citation HTML before rendering it', () => {
+    cy.customMount(
+      <ViewStyledCitationModal
+        show
+        handleClose={() => {}}
+        citation={mockCitation}
+        defaultStyleCitationSeed={{
+          styleSlug: 'chicago-author-date',
+          html: '<span data-safe="true" onclick="alert(1)">Safe text</span><script>alert(1)</script>'
+        }}
+      />
+    )
+
+    cy.findByText('Safe text').should('have.attr', 'data-safe', 'true')
+    cy.findByText('Safe text').should('not.have.attr', 'onclick')
+    cy.get('script').should('not.exist')
   })
 
   it('groups CSL styles into Common Styles and More Styles sections', () => {
@@ -240,14 +263,18 @@ describe('CitationDownloadButton', () => {
     cy.findByText('Select...').should('not.exist')
     cy.findByText('Common Styles').should('exist')
     cy.findByText('More Styles').should('exist')
-    cy.findByRole('option', { name: 'chicago-author-date' }).should('exist')
-    cy.findByRole('option', { name: 'ieee' }).should('exist')
+    cy.findByRole('option', {
+      name: 'Chicago Manual of Style 17th edition (author-date)'
+    }).should('exist')
+    cy.findByRole('option', { name: 'IEEE' }).should('exist')
 
     cy.findByPlaceholderText('Search...').type('apa')
 
     cy.findByText('Common Styles').should('not.exist')
     cy.findByText('More Styles').should('not.exist')
-    cy.findByRole('option', { name: 'apa' }).should('exist')
+    cy.findByRole('option', {
+      name: 'American Psychological Association 7th edition'
+    }).should('exist')
   })
 
   it('reformats the citation when a different CSL style is selected', () => {
@@ -261,7 +288,9 @@ describe('CitationDownloadButton', () => {
 
     cy.get('#cslStyle').click()
     cy.findByPlaceholderText('Search...').type('apa')
-    cy.findByRole('option', { name: 'apa' }).click()
+    cy.findByRole('option', {
+      name: 'American Psychological Association 7th edition'
+    }).click()
 
     cy.findByText('STYLE-B: Mock Dataset Title').should('exist')
   })
@@ -277,7 +306,9 @@ describe('CitationDownloadButton', () => {
 
     cy.get('#cslStyle').click()
     cy.findByPlaceholderText('Search...').type('apa')
-    cy.findByRole('option', { name: 'apa' }).click()
+    cy.findByRole('option', {
+      name: 'American Psychological Association 7th edition'
+    }).click()
 
     cy.findByText('Mock Dataset Title').should('exist')
     cy.get('.csl-left-margin').should('exist').and('not.be.visible')
@@ -327,7 +358,9 @@ describe('CitationDownloadButton', () => {
 
     cy.get('#cslStyle').click()
     cy.findByPlaceholderText('Search...').type('apa')
-    cy.findByRole('option', { name: 'apa' }).click()
+    cy.findByRole('option', {
+      name: 'American Psychological Association 7th edition'
+    }).click()
 
     cy.findByText('Citation in apa style').should('exist')
     cy.findByText('STYLE-B: Mock Dataset Title').should('exist')

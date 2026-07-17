@@ -38,6 +38,14 @@ describe('CopyToClipboardButton', () => {
     cy.findByText(`Click to copy ${textToCopy}`).should('not.exist')
   })
 
+  it('uses a native button and exposes its disabled state', () => {
+    cy.customMount(<CopyToClipboardButton text="Citation" disabled />)
+
+    cy.findByRole('button', { name: /Copy to clipboard icon/ })
+      .should('match', 'button')
+      .and('be.disabled')
+  })
+
   it('truncates text when it is too long', () => {
     const textToCopy = '0187a54071542738aa47939e8218e5f2'
     cy.customMount(<CopyToClipboardButton text={textToCopy} />)
