@@ -9,22 +9,19 @@ import styles from '../Citation.module.scss'
 import { buildCslStyleOptions, DEFAULT_CSL_STYLE_SLUG } from './csl/cslStyleOptions'
 import { useStyledCitation, StyledCitationSeed } from './csl/useStyledCitation'
 import { CslJsonItem } from './csl/citeprocEngine'
-import DOMPurify from 'dompurify'
 
 interface ViewStyledCitationModalProps {
   show: boolean
   handleClose: () => void
   citation: FormattedCitation | null
   defaultStyleCitationSeed?: StyledCitationSeed | null
-  isCitationLoading?: boolean
 }
 
 export const ViewStyledCitationModal = ({
   show,
   handleClose,
   citation,
-  defaultStyleCitationSeed,
-  isCitationLoading = false
+  defaultStyleCitationSeed
 }: ViewStyledCitationModalProps) => {
   const { t } = useTranslation('shared', { keyPrefix: 'downloadCitation' })
   const { t: tShared } = useTranslation('shared')
@@ -39,21 +36,9 @@ export const ViewStyledCitationModal = ({
   const { citationHtml, isLoading, error } = useStyledCitation(
     cslJsonItem,
     selectedStyleSlug,
-    defaultStyleCitationSeed,
-    isCitationLoading
+    defaultStyleCitationSeed
   )
-  const sanitizedCitationHtml = useMemo(
-    () =>
-      citationHtml
-        ? DOMPurify.sanitize(citationHtml, {
-            USE_PROFILES: { html: true }
-          })
-        : '',
-    [citationHtml]
-  )
-  const plainTextCitation = sanitizedCitationHtml
-    ? Utils.htmlToPlainText(sanitizedCitationHtml)
-    : ''
+  const plainTextCitation = citationHtml ? Utils.htmlToPlainText(citationHtml) : ''
 
   return (
     <Modal show={show} onHide={handleClose} centered ariaLabel={modalTitle}>
@@ -80,7 +65,7 @@ export const ViewStyledCitationModal = ({
               {isLoading && <Spinner variant="info" size="sm" />}
               {!isLoading && error && <Alert variant="danger">{t('styleFormatError')}</Alert>}
               {!isLoading && !error && (
-                <span dangerouslySetInnerHTML={{ __html: sanitizedCitationHtml }} />
+                <span dangerouslySetInnerHTML={{ __html: citationHtml ?? '' }} />
               )}
             </p>
             <CopyToClipboardButton

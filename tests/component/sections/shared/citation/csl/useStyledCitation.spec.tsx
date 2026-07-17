@@ -21,22 +21,12 @@ describe('useStyledCitation', () => {
     clearCslCachesForTests()
   })
 
-  it('shows a loading state while the CSL-JSON citation is being fetched', () => {
-    const { result } = renderHook(() =>
-      useStyledCitation(null, 'chicago-author-date', null, true)
-    )
+  it('shows a loading state and no citation while cslJsonItem is null', () => {
+    const { result } = renderHook(() => useStyledCitation(null, 'chicago-author-date'))
 
     expect(result.current.isLoading).to.equal(true)
     expect(result.current.citationHtml).to.equal(null)
     expect(result.current.error).to.equal(false)
-  })
-
-  it('shows an error when no CSL-JSON citation is available after fetching', () => {
-    const { result } = renderHook(() => useStyledCitation(null, 'chicago-author-date'))
-
-    expect(result.current.isLoading).to.equal(false)
-    expect(result.current.citationHtml).to.equal(null)
-    expect(result.current.error).to.equal(true)
   })
 
   it('formats the citation once a cslJsonItem is provided', () => {

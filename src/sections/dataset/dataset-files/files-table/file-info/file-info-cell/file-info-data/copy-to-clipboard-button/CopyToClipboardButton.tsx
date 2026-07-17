@@ -33,16 +33,17 @@ export function CopyToClipboardButton({
       })
   }
 
-  const accessibleLabel = tooltipText ?? `${t('table.copyToClipboard.clickToCopy')} ${text}`
-  const tooltipOverlay = disabled ? '' : accessibleLabel
+  const tooltipOverlay = disabled
+    ? ''
+    : tooltipText ?? `${t('table.copyToClipboard.clickToCopy')} ${text}`
 
   return (
     <Tooltip placement="top" overlay={tooltipOverlay}>
-      <button
-        type="button"
+      <span
         onClick={copyToClipboard}
         className={disabled ? `${styles.container} ${styles.disabled}` : styles.container}
-        disabled={disabled}>
+        role="button"
+        aria-disabled={disabled}>
         {showTruncateText && truncateText(text)}
         {copied ? (
           <Check
@@ -59,7 +60,7 @@ export function CopyToClipboardButton({
             className={styles.clipboard}
           />
         )}
-      </button>
+      </span>
     </Tooltip>
   )
 }

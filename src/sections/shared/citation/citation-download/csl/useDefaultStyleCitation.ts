@@ -31,9 +31,6 @@ export function useDefaultStyleCitation({
 
   useEffect(() => {
     let cancelled = false
-    setCslJsonCitation(null)
-    setDefaultStyleCitationHtml(null)
-    setDefaultStyleCitationText('')
     setIsFetching(true)
     Promise.resolve()
       .then(() =>

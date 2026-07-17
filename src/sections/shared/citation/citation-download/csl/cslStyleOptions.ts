@@ -15,11 +15,10 @@ export function buildCslStyleOptions(
   moreStylesGroupLabel: string
 ): CslStyleOption[] {
   const commonSlugs = new Set(COMMON_CSL_STYLE_SLUGS)
-  const labelsBySlug = new Map(cslStylesRaw.map((style) => [style.slug, style.label]))
 
   const commonOptions: CslStyleOption[] = COMMON_CSL_STYLE_SLUGS.map((slug) => ({
     value: slug,
-    label: labelsBySlug.get(slug) ?? slug,
+    label: slug,
     group: commonStylesGroupLabel
   }))
 
@@ -27,7 +26,7 @@ export function buildCslStyleOptions(
     .filter((style) => !commonSlugs.has(style.slug))
     .map((style) => ({
       value: style.slug,
-      label: style.label,
+      label: style.slug,
       group: moreStylesGroupLabel
     }))
 
