@@ -39,11 +39,11 @@ export function CopyToClipboardButton({
 
   return (
     <Tooltip placement="top" overlay={tooltipOverlay}>
-      <span
+      <button
+        type="button"
         onClick={copyToClipboard}
-        className={disabled ? `${styles.container} ${styles.disabled}` : styles.container}
-        role="button"
-        aria-disabled={disabled}>
+        aria-disabled={disabled}
+        className={styles.container}>
         {showTruncateText && truncateText(text)}
         {copied ? (
           <Check
@@ -60,7 +60,7 @@ export function CopyToClipboardButton({
             className={styles.clipboard}
           />
         )}
-      </span>
+      </button>
     </Tooltip>
   )
 }

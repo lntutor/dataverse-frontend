@@ -22,6 +22,7 @@ export function CitationDownloadButton({ datasetId, version }: CitationDownloadP
   const { t } = useTranslation('shared', { keyPrefix: 'downloadCitation' })
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [styledCitation, setStyledCitation] = useState<FormattedCitation | null>(null)
+  const [styledCitationFetchFailed, setStyledCitationFetchFailed] = useState(false)
 
   const { error, handleGetCitation, handleDownloadCitation } = useDownloadCitation({
     datasetRepository,
@@ -43,8 +44,10 @@ export function CitationDownloadButton({ datasetId, version }: CitationDownloadP
   const handleCloseModal = () => setIsModalOpen(false)
   const handleOpenModal = async () => {
     setIsModalOpen(true)
+    setStyledCitationFetchFailed(false)
     const result = cslJsonCitation ?? (await handleGetCitation(CitationFormat.CSLJson))
     setStyledCitation(result)
+    setStyledCitationFetchFailed(result === null)
   }
 
   return (
@@ -83,6 +86,7 @@ export function CitationDownloadButton({ datasetId, version }: CitationDownloadP
         show={isModalOpen}
         handleClose={handleCloseModal}
         citation={styledCitation}
+        citationFetchFailed={styledCitationFetchFailed}
         defaultStyleCitationSeed={
           defaultStyleCitationHtml
             ? { styleSlug: DEFAULT_CSL_STYLE_SLUG, html: defaultStyleCitationHtml }

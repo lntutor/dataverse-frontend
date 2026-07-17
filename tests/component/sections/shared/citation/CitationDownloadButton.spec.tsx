@@ -361,4 +361,25 @@ describe('CitationDownloadButton', () => {
 
     cy.findByText('An error occurred while downloading the citation').should('exist')
   })
+
+  it('shows an error in the modal instead of spinning forever when the citation fetch fails', () => {
+    datasetRepository.getDatasetCitationInOtherFormats = cy
+      .stub()
+      .rejects(new Error('Citation fetch error'))
+
+    cy.customMount(
+      <WithRepositories datasetRepository={datasetRepository}>
+        <CitationDownloadButton datasetId="test-dataset" version="1.0" />
+      </WithRepositories>
+    )
+
+    cy.findByRole('button', { name: 'Cite Dataset' }).click()
+    cy.findByText('View Styled Citation').click()
+
+    cy.findByRole('dialog').should('exist')
+    cy.findByText(
+      /An error occurred while formatting the citation in the selected style. Please try a different style or try again later./
+    ).should('exist')
+    cy.get('.spinner-border').should('not.exist')
+  })
 })

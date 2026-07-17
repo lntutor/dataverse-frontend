@@ -36,7 +36,9 @@ describe('citeprocEngine', () => {
       )
     ).then((html) => {
       expect(html).not.to.include('<script>')
-      expect(html).to.include('&#60;script&#62;')
+      // DOMPurify re-serializes citeproc's numeric entities (&#60;) as named ones (&lt;) —
+      // either way, no literal `<`/`>` reach the DOM.
+      expect(html).to.include('&lt;script&gt;')
     })
   })
 

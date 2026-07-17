@@ -1,4 +1,5 @@
 import CSL from 'citeproc'
+import DOMPurify from 'dompurify'
 import { getResolvedStyleXml, getLocaleXml, DEFAULT_CSL_LOCALE } from './cslStyleFetcher'
 
 export type CslJsonItem = Record<string, unknown> & { id?: string | number }
@@ -27,5 +28,7 @@ export async function formatCitationAsHtml(
   )
   engine.updateItems([itemId])
   const bibliography = engine.makeBibliography()
-  return bibliography ? bibliography[1][0] ?? '' : ''
+  const html = bibliography ? bibliography[1][0] ?? '' : ''
+
+  return DOMPurify.sanitize(html, { USE_PROFILES: { html: true } })
 }

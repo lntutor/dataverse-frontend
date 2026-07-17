@@ -131,6 +131,42 @@ describe('useDefaultStyleCitation', () => {
     )
   })
 
+  it('clears the previous dataset citation when the dataset changes and the new fetch fails', async () => {
+    datasetRepository.getDatasetCitationInOtherFormats = cy.stub().resolves(mockCitation)
+
+    const { result, rerender } = renderHook(
+      ({ datasetId, version }) =>
+        useDefaultStyleCitation({ datasetRepository, datasetId, version }),
+      { initialProps: { datasetId: 'dataset-a', version: '1.0' } }
+    )
+
+    await waitFor(() => {
+      expect(result.current.isFetching).to.equal(false)
+      expect(result.current.cslJsonCitation).to.deep.equal(mockCitation)
+      expect(result.current.defaultStyleCitationText).to.include('Mock Dataset Title')
+    })
+
+    datasetRepository.getDatasetCitationInOtherFormats = cy
+      .stub()
+      .rejects(new Error('Citation fetch error'))
+
+    rerender({ datasetId: 'dataset-b', version: '1.0' })
+
+    expect(result.current.cslJsonCitation).to.equal(null)
+    expect(result.current.defaultStyleCitationHtml).to.equal(null)
+    expect(result.current.defaultStyleCitationText).to.equal('')
+
+    await waitFor(() => {
+      expect(result.current.isFetching).to.equal(false)
+    })
+
+    // Still cleared once the failed fetch for dataset-b settles — not repopulated with
+    // dataset-a's stale text.
+    expect(result.current.cslJsonCitation).to.equal(null)
+    expect(result.current.defaultStyleCitationHtml).to.equal(null)
+    expect(result.current.defaultStyleCitationText).to.equal('')
+  })
+
   it('does not update state after it is unmounted while fetching', () => {
     let resolveCitation: ((citation: FormattedCitation) => void) | undefined
     datasetRepository.getDatasetCitationInOtherFormats = cy.stub().returns(

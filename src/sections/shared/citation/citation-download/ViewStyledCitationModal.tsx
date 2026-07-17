@@ -14,6 +14,7 @@ interface ViewStyledCitationModalProps {
   show: boolean
   handleClose: () => void
   citation: FormattedCitation | null
+  citationFetchFailed?: boolean
   defaultStyleCitationSeed?: StyledCitationSeed | null
 }
 
@@ -21,6 +22,7 @@ export const ViewStyledCitationModal = ({
   show,
   handleClose,
   citation,
+  citationFetchFailed = false,
   defaultStyleCitationSeed
 }: ViewStyledCitationModalProps) => {
   const { t } = useTranslation('shared', { keyPrefix: 'downloadCitation' })
@@ -33,11 +35,13 @@ export const ViewStyledCitationModal = ({
     [t]
   )
   const cslJsonItem = useMemo(() => parseCslJsonItem(citation), [citation])
-  const { citationHtml, isLoading, error } = useStyledCitation(
-    cslJsonItem,
-    selectedStyleSlug,
-    defaultStyleCitationSeed
-  )
+  const {
+    citationHtml,
+    isLoading: isFormattingCitation,
+    error: formatError
+  } = useStyledCitation(cslJsonItem, selectedStyleSlug, defaultStyleCitationSeed)
+  const isLoading = !citationFetchFailed && isFormattingCitation
+  const error = citationFetchFailed || formatError
   const plainTextCitation = citationHtml ? Utils.htmlToPlainText(citationHtml) : ''
 
   return (
@@ -46,6 +50,11 @@ export const ViewStyledCitationModal = ({
         <Modal.Title>{modalTitle}</Modal.Title>
       </Modal.Header>
       <Modal.Body>
+        {error && (
+          <Alert variant="danger" dismissible={false}>
+            {t('styleFormatError')}
+          </Alert>
+        )}
         <Form>
           <Form.Group.Label htmlFor="cslStyle">{t('selectCSLStyle')}</Form.Group.Label>
           <Form.Group.SelectAdvanced
@@ -57,25 +66,26 @@ export const ViewStyledCitationModal = ({
             defaultValue={selectedStyleSlug}
             onChange={setSelectedStyleSlug}
           />
-          <Form.Group.Label htmlFor="citationContent" className={styles['citationStyleLabel']}>
-            {t('citationInStyle', { styleName: selectedStyleSlug })}
-          </Form.Group.Label>
-          <Stack direction="horizontal" gap={1}>
-            <p className={cn('form-control', styles['styledCitationBox'])}>
-              {isLoading && <Spinner variant="info" size="sm" />}
-              {!isLoading && error && <Alert variant="danger">{t('styleFormatError')}</Alert>}
-              {!isLoading && !error && (
-                <span dangerouslySetInnerHTML={{ __html: citationHtml ?? '' }} />
-              )}
-            </p>
-            <CopyToClipboardButton
-              text={plainTextCitation}
-              showTruncateText={false}
-              tooltipText={t('copyCitationToClipboard')}
-              iconSize={24}
-              disabled={isLoading || !!error}
-            />
-          </Stack>
+          {!error && (
+            <>
+              <Form.Group.Label htmlFor="citationContent" className={styles['citationStyleLabel']}>
+                {t('citationInStyle', { styleName: selectedStyleSlug })}
+              </Form.Group.Label>
+              <Stack direction="horizontal" gap={1}>
+                <p className={cn('form-control', styles['styledCitationBox'])}>
+                  {isLoading && <Spinner variant="info" size="sm" />}
+                  {!isLoading && <span dangerouslySetInnerHTML={{ __html: citationHtml ?? '' }} />}
+                </p>
+                <CopyToClipboardButton
+                  text={plainTextCitation}
+                  showTruncateText={false}
+                  tooltipText={t('copyCitationToClipboard')}
+                  iconSize={24}
+                  disabled={isLoading}
+                />
+              </Stack>
+            </>
+          )}
         </Form>
       </Modal.Body>
       <Modal.Footer>
