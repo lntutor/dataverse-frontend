@@ -21,6 +21,24 @@ type Dataset = {
 }
 const DRAFT_PARAM = DatasetNonNumericVersionSearchParam.DRAFT
 
+const visitDatasetMetadataTabAndAssertExportMetadata = (
+  persistentId: string,
+  shouldExist: boolean,
+  version?: string
+) => {
+  const searchParams = new URLSearchParams({
+    persistentId,
+    tab: 'metadata'
+  })
+
+  if (version) {
+    searchParams.set('version', version)
+  }
+
+  cy.visit(`${FRONTEND_BASE_PATH}/datasets?${searchParams.toString()}`)
+  cy.findByRole('button', { name: 'Export Metadata' }).should(shouldExist ? 'exist' : 'not.exist')
+}
+
 describe('Dataset', () => {
   beforeEach(() => {
     TestsUtils.login().then((token) => {
@@ -182,6 +200,43 @@ describe('Dataset', () => {
             cy.findByText('Metadata').should('exist')
             cy.findByText('Files').should('exist')
           })
+        })
+    })
+
+    it('shows export metadata on the dataset page for admin draft, admin latest published, and guest latest published views', () => {
+      cy.wrap(DatasetHelper.create()).then((draftDataset) => {
+        visitDatasetMetadataTabAndAssertExportMetadata(draftDataset.persistentId, true, DRAFT_PARAM)
+      })
+
+      cy.wrap(DatasetHelper.createAndPublish())
+        .its('persistentId')
+        .then((persistentId: string) => {
+          visitDatasetMetadataTabAndAssertExportMetadata(persistentId, true)
+
+          TestsUtils.logout()
+          visitDatasetMetadataTabAndAssertExportMetadata(persistentId, true)
+        })
+    })
+
+    it('hides export metadata on the dataset page for older published versions', () => {
+      cy.wrap(DatasetHelper.createWithFileAndPublish(FileHelper.create()), { timeout: 6000 })
+        .then((dataset) => {
+          if (!dataset.file) {
+            throw new Error('Expected created dataset to include a file')
+          }
+
+          return cy.wrap(
+            FileHelper.addLabel(dataset.file.id, []).then(async () => {
+              await DatasetHelper.publish(dataset.persistentId)
+              return dataset.persistentId
+            })
+          )
+        })
+        .then((persistentId) => {
+          visitDatasetMetadataTabAndAssertExportMetadata(persistentId, false, '1.0')
+
+          TestsUtils.logout()
+          visitDatasetMetadataTabAndAssertExportMetadata(persistentId, false, '1.0')
         })
     })
 
