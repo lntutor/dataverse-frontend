@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { PaginationControls } from '../../../../../src/sections/shared/pagination/PaginationControls'
 import { PaginationInfo } from '../../../../../src/shared/pagination/domain/models/PaginationInfo'
 import { FilePaginationInfo } from '../../../../../src/files/domain/models/FilePaginationInfo'
@@ -168,6 +169,34 @@ describe('PaginationControls', () => {
     )
   })
 
+  it('clicking a page button after selecting a page size of 50 goes to page 5', () => {
+    const onPaginationInfoChange = cy.stub().as('onPaginationInfoChange')
+    // total=250 with pageSize=50 gives exactly 5 pages, so a "5" button exists to click.
+    const initialPaginationInfo = new PaginationInfo<FilePaginationInfo | DatasetPaginationInfo>(
+      1,
+      pageSize,
+      250
+    )
+    cy.customMount(
+      <PaginationControls
+        initialPaginationInfo={initialPaginationInfo}
+        onPaginationInfoChange={onPaginationInfoChange}
+      />
+    )
+
+    cy.findByLabelText('Items per page').select('50')
+    cy.wrap(onPaginationInfoChange).should(
+      'have.been.calledWith',
+      initialPaginationInfo.withPageSize(50)
+    )
+
+    cy.findByRole('button', { name: '5' }).click()
+    cy.wrap(onPaginationInfoChange).should(
+      'have.been.calledWith',
+      initialPaginationInfo.withPageSize(50).goToPage(5)
+    )
+  })
+
   it('does not show the page size selector if the prop is false', () => {
     const onPaginationInfoChange = cy.stub().as('onPaginationInfoChange')
     cy.customMount(
@@ -188,27 +217,33 @@ describe('PaginationControls', () => {
       pageSize,
       10
     )
-
-    cy.customMount(
-      <PaginationControls
-        initialPaginationInfo={initialPaginationInfo}
-        onPaginationInfoChange={onPaginationInfoChange}
-      />
-    ).then(({ rerender }) => {
-      cy.findByRole('button', { name: 'Next' }).should('not.exist')
-
-      rerender(
-        <PaginationControls
-          initialPaginationInfo={initialPaginationInfo.withTotal(30)}
-          onPaginationInfoChange={onPaginationInfoChange}
-        />
+    function TestHost() {
+      const [currentPaginationInfo, setCurrentPaginationInfo] = useState(initialPaginationInfo)
+      return (
+        <>
+          <button onClick={() => setCurrentPaginationInfo(currentPaginationInfo.withTotal(30))}>
+            Increase total
+          </button>
+          <PaginationControls
+            initialPaginationInfo={currentPaginationInfo}
+            onPaginationInfoChange={onPaginationInfoChange}
+          />
+        </>
       )
-    })
+    }
 
-    cy.findByRole('button', { name: 'Next' }).should('exist')
+    cy.customMount(<TestHost />)
+
+    cy.findByRole('button', { name: 'Next' }).should('not.exist')
+    cy.findByRole('button', { name: 'Increase total' }).click()
+
+    cy.findByRole('button', { name: '3' }).should('exist')
+    cy.wrap(onPaginationInfoChange).should('not.have.been.called')
+
+    cy.findByRole('button', { name: 'Last' }).click()
     cy.wrap(onPaginationInfoChange).should(
       'have.been.calledWith',
-      initialPaginationInfo.withTotal(30)
+      initialPaginationInfo.withTotal(30).goToPage(3)
     )
   })
 })
