@@ -1,6 +1,5 @@
 import { lazy, Suspense } from 'react'
 import { Navigate, RouteObject } from 'react-router-dom'
-import { UserJSDataverseRepository } from '@/users/infrastructure/repositories/UserJSDataverseRepository'
 import { Route } from '@/sections/Route.enum'
 import { Layout } from '@/sections/layout/Layout'
 import { ErrorPage } from '@/sections/error-page/ErrorPage'
@@ -8,8 +7,6 @@ import { AppLoader } from '@/sections/shared/layout/app-loader/AppLoader'
 import { AuthCallback } from '@/sections/auth-callback/AuthCallback'
 import { SessionProvider } from '@/sections/session/SessionProvider'
 import { ProtectedRoute } from './ProtectedRoute'
-
-const userRepository = new UserJSDataverseRepository()
 
 const Homepage = lazy(() =>
   import('../sections/homepage/HomepageFactory').then(({ HomepageFactory }) => ({
@@ -93,6 +90,28 @@ const EditFeaturedItems = lazy(() =>
   )
 )
 
+const DatasetTemplatesPage = lazy(() =>
+  import('../sections/templates/DatasetTemplatesFactory').then(({ DatasetTemplatesFactory }) => ({
+    default: () => DatasetTemplatesFactory.create()
+  }))
+)
+
+const CreateTemplatePage = lazy(() =>
+  import('../sections/templates/create-template/CreateTemplateFactory').then(
+    ({ CreateTemplateFactory }) => ({
+      default: () => CreateTemplateFactory.create()
+    })
+  )
+)
+
+const EditDatasetTemplateTermsPage = lazy(() =>
+  import('../sections/templates/edit-template-terms/EditTemplateTermsFactory').then(
+    ({ EditTemplateTermsFactory }) => ({
+      default: () => EditTemplateTermsFactory.create()
+    })
+  )
+)
+
 const ReplaceFile = lazy(() =>
   import('../sections/replace-file/ReplaceFileFactory').then(({ ReplaceFileFactory }) => ({
     default: () => ReplaceFileFactory.create()
@@ -133,7 +152,7 @@ const AdvancedSearchPage = lazy(() =>
 
 export const routes: RouteObject[] = [
   {
-    element: <SessionProvider repository={userRepository} />,
+    element: <SessionProvider />,
     children: [
       {
         path: '/',
@@ -288,6 +307,33 @@ export const routes: RouteObject[] = [
                 element: (
                   <Suspense fallback={<AppLoader />}>
                     <EditFeaturedItems />
+                  </Suspense>
+                ),
+                errorElement: <ErrorPage />
+              },
+              {
+                path: Route.COLLECTION_TEMPLATES,
+                element: (
+                  <Suspense fallback={<AppLoader />}>
+                    <DatasetTemplatesPage />
+                  </Suspense>
+                ),
+                errorElement: <ErrorPage />
+              },
+              {
+                path: Route.TEMPLATES_CREATE,
+                element: (
+                  <Suspense fallback={<AppLoader />}>
+                    <CreateTemplatePage />
+                  </Suspense>
+                ),
+                errorElement: <ErrorPage />
+              },
+              {
+                path: Route.TEMPLATES_EDIT_TERMS,
+                element: (
+                  <Suspense fallback={<AppLoader />}>
+                    <EditDatasetTemplateTermsPage />
                   </Suspense>
                 ),
                 errorElement: <ErrorPage />

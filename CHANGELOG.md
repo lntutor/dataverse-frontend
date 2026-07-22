@@ -8,9 +8,17 @@ This changelog follows the principles of [Keep a Changelog](https://keepachangel
 
 ### Added
 
+- Dataset Templates UI integration, including create/edit flows, previews, and skeleton states.
+- Dataset Page: added a sidebar to show dataset reviews
+
 ### Changed
 
 - Add multilingual support for the banner message.
+- Hide "Export Metadata" on dataset and file pages that are not for the latest published dataset version.
+- Show "Export Metadata" on dataset and file pages for draft version.
+- Avoided prop-drilling for file, guestbook, user and external tool repository, so used context to share repository instances.
+
+### Fixed
 
 ### Removed
 

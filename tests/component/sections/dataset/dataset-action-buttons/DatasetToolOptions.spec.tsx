@@ -6,6 +6,7 @@ import {
 import { ExternalToolsProvider } from '@/shared/contexts/external-tools/ExternalToolsProvider'
 import { DatasetExternalToolResolvedMother } from '@tests/component/externalTools/domain/models/DatasetExternalToolResolvedMother'
 import { ExternalToolsMother } from '@tests/component/externalTools/domain/models/ExternalToolsMother'
+import { WithRepositories } from '@tests/component/WithRepositories'
 
 const testExternalToolsRepository: ExternalToolsRepository = {} as ExternalToolsRepository
 
@@ -21,9 +22,11 @@ describe('DatasetToolOptions', () => {
 
   it('renders the dataset configure tools options if they are available', () => {
     cy.customMount(
-      <ExternalToolsProvider externalToolsRepository={testExternalToolsRepository}>
-        <DatasetConfigureOptions persistentId="some-persistent-id" />
-      </ExternalToolsProvider>
+      <WithRepositories externalToolsRepository={testExternalToolsRepository}>
+        <ExternalToolsProvider>
+          <DatasetConfigureOptions persistentId="some-persistent-id" />
+        </ExternalToolsProvider>
+      </WithRepositories>
     )
 
     cy.findByText('Explore Options').should('not.exist')
@@ -34,18 +37,22 @@ describe('DatasetToolOptions', () => {
   it('renders nothing if there are no dataset configure tools', () => {
     testExternalToolsRepository.getExternalTools = cy.stub().resolves([])
     cy.customMount(
-      <ExternalToolsProvider externalToolsRepository={testExternalToolsRepository}>
-        <DatasetConfigureOptions persistentId="some-persistent-id" />
-      </ExternalToolsProvider>
+      <WithRepositories externalToolsRepository={testExternalToolsRepository}>
+        <ExternalToolsProvider>
+          <DatasetConfigureOptions persistentId="some-persistent-id" />
+        </ExternalToolsProvider>
+      </WithRepositories>
     )
     cy.findByText('Configure Options').should('not.exist')
   })
 
   it('renders the dataset explore tools options if they are available', () => {
     cy.customMount(
-      <ExternalToolsProvider externalToolsRepository={testExternalToolsRepository}>
-        <DatasetExploreOptions persistentId="some-persistent-id" />
-      </ExternalToolsProvider>
+      <WithRepositories externalToolsRepository={testExternalToolsRepository}>
+        <ExternalToolsProvider>
+          <DatasetExploreOptions persistentId="some-persistent-id" />
+        </ExternalToolsProvider>
+      </WithRepositories>
     )
 
     cy.findByText('Configure Options').should('not.exist')
@@ -56,9 +63,11 @@ describe('DatasetToolOptions', () => {
   it('renders nothing if there are no dataset explore tools', () => {
     testExternalToolsRepository.getExternalTools = cy.stub().resolves([])
     cy.customMount(
-      <ExternalToolsProvider externalToolsRepository={testExternalToolsRepository}>
-        <DatasetExploreOptions persistentId="some-persistent-id" />
-      </ExternalToolsProvider>
+      <WithRepositories externalToolsRepository={testExternalToolsRepository}>
+        <ExternalToolsProvider>
+          <DatasetExploreOptions persistentId="some-persistent-id" />
+        </ExternalToolsProvider>
+      </WithRepositories>
     )
     cy.findByText('Explore Options').should('not.exist')
   })
@@ -84,9 +93,11 @@ describe('DatasetToolOptions', () => {
     })
 
     cy.customMount(
-      <ExternalToolsProvider externalToolsRepository={testExternalToolsRepository}>
-        <DatasetExploreOptions persistentId="some-persistent-id" />
-      </ExternalToolsProvider>
+      <WithRepositories externalToolsRepository={testExternalToolsRepository}>
+        <ExternalToolsProvider>
+          <DatasetExploreOptions persistentId="some-persistent-id" />
+        </ExternalToolsProvider>
+      </WithRepositories>
     )
 
     cy.findByText('Dataset Explore Tool').should('exist').click()
@@ -122,9 +133,11 @@ describe('DatasetToolOptions', () => {
     })
 
     cy.customMount(
-      <ExternalToolsProvider externalToolsRepository={testExternalToolsRepository}>
-        <DatasetExploreOptions persistentId="some-persistent-id" />
-      </ExternalToolsProvider>
+      <WithRepositories externalToolsRepository={testExternalToolsRepository}>
+        <ExternalToolsProvider>
+          <DatasetExploreOptions persistentId="some-persistent-id" />
+        </ExternalToolsProvider>
+      </WithRepositories>
     )
 
     cy.findByText('Dataset Explore Tool').click()
@@ -157,9 +170,11 @@ describe('DatasetToolOptions', () => {
     })
 
     cy.customMount(
-      <ExternalToolsProvider externalToolsRepository={testExternalToolsRepository}>
-        <DatasetExploreOptions persistentId="some-persistent-id" />
-      </ExternalToolsProvider>
+      <WithRepositories externalToolsRepository={testExternalToolsRepository}>
+        <ExternalToolsProvider>
+          <DatasetExploreOptions persistentId="some-persistent-id" />
+        </ExternalToolsProvider>
+      </WithRepositories>
     )
 
     cy.findByText('Dataset Explore Tool').should('exist').click()
@@ -192,9 +207,11 @@ describe('DatasetToolOptions', () => {
     })
 
     cy.customMount(
-      <ExternalToolsProvider externalToolsRepository={testExternalToolsRepository}>
-        <DatasetExploreOptions persistentId="some-persistent-id" />
-      </ExternalToolsProvider>
+      <WithRepositories externalToolsRepository={testExternalToolsRepository}>
+        <ExternalToolsProvider>
+          <DatasetExploreOptions persistentId="some-persistent-id" />
+        </ExternalToolsProvider>
+      </WithRepositories>
     )
 
     cy.findByText('Dataset Explore Tool').click()
@@ -235,9 +252,11 @@ describe('DatasetToolOptions', () => {
     })
 
     cy.customMount(
-      <ExternalToolsProvider externalToolsRepository={testExternalToolsRepository}>
-        <DatasetExploreOptions persistentId="some-persistent-id" />
-      </ExternalToolsProvider>
+      <WithRepositories externalToolsRepository={testExternalToolsRepository}>
+        <ExternalToolsProvider>
+          <DatasetExploreOptions persistentId="some-persistent-id" />
+        </ExternalToolsProvider>
+      </WithRepositories>
     )
 
     cy.findByText('Dataset Explore Tool').should('exist').as('toolButton')
@@ -260,9 +279,11 @@ describe('DatasetToolOptions', () => {
       })
 
       cy.customMount(
-        <ExternalToolsProvider externalToolsRepository={testExternalToolsRepository}>
-          <DatasetExploreOptions persistentId="some-persistent-id" />
-        </ExternalToolsProvider>
+        <WithRepositories externalToolsRepository={testExternalToolsRepository}>
+          <ExternalToolsProvider>
+            <DatasetExploreOptions persistentId="some-persistent-id" />
+          </ExternalToolsProvider>
+        </WithRepositories>
       )
 
       cy.findByText('Dataset Explore Tool').should('exist').click()
@@ -288,9 +309,11 @@ describe('DatasetToolOptions', () => {
       })
 
       cy.customMount(
-        <ExternalToolsProvider externalToolsRepository={testExternalToolsRepository}>
-          <DatasetExploreOptions persistentId="some-persistent-id" />
-        </ExternalToolsProvider>
+        <WithRepositories externalToolsRepository={testExternalToolsRepository}>
+          <ExternalToolsProvider>
+            <DatasetExploreOptions persistentId="some-persistent-id" />
+          </ExternalToolsProvider>
+        </WithRepositories>
       )
 
       cy.findByText('Dataset Explore Tool').should('exist').click()
@@ -316,9 +339,11 @@ describe('DatasetToolOptions', () => {
       })
 
       cy.customMount(
-        <ExternalToolsProvider externalToolsRepository={testExternalToolsRepository}>
-          <DatasetExploreOptions persistentId="some-persistent-id" />
-        </ExternalToolsProvider>
+        <WithRepositories externalToolsRepository={testExternalToolsRepository}>
+          <ExternalToolsProvider>
+            <DatasetExploreOptions persistentId="some-persistent-id" />
+          </ExternalToolsProvider>
+        </WithRepositories>
       )
 
       cy.findByText('Dataset Explore Tool').should('exist').click()
