@@ -10,8 +10,13 @@ This changelog follows the principles of [Keep a Changelog](https://keepachangel
 
 - Dataset Templates UI integration, including create/edit flows, previews, and skeleton states.
 - Storage Driver selection in Create Collection form, with dynamic fetching of available storage drivers from the backend.
+- Dataset Page: added a sidebar to show dataset reviews
 
 ### Changed
+
+- Hide "Export Metadata" on dataset and file pages that are not for the latest published dataset version.
+- Show "Export Metadata" on dataset and file pages for draft version.
+- Avoided prop-drilling for file, guestbook, user and external tool repository, so used context to share repository instances.
 
 ### Fixed
 
