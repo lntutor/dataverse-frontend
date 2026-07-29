@@ -49,7 +49,7 @@ export function File({
   const { setIsLoading } = useLoading()
   const { t } = useTranslation('file')
   const { file, isLoading } = useFile(repository, id, datasetVersionNumber)
-  const { externalTools, externalToolsRepository } = useExternalTools()
+  const { externalTools } = useExternalTools()
   const [activeTab, setActiveTab] = useState<string>(
     toolTypeSelectedQueryParam && file?.permissions.canDownloadFile
       ? FilePageHelper.EXT_TOOL_TAB_KEY
@@ -133,7 +133,12 @@ export function File({
           <Row>
             <Col sm={9}>
               <span className={styles['citation-title']}>{t('fileCitationTitle')}</span>
-              <FileCitation citation={file.citation} datasetVersion={file.datasetVersion} />
+              <FileCitation
+                citation={file.citation}
+                datasetVersion={file.datasetVersion}
+                fileRepository={repository}
+                fileId={file.id}
+              />
               <span className={styles['citation-title']}>{t('datasetCitationTitle')}</span>
               <DatasetCitation
                 version={file.datasetVersion}
@@ -200,7 +205,6 @@ export function File({
                     applicableTools={fileApplicablePreviewOrQueryTools}
                     toolTypeSelectedQueryParam={toolTypeSelectedQueryParam}
                     isInView={activeTab === FilePageHelper.EXT_TOOL_TAB_KEY}
-                    externalToolsRepository={externalToolsRepository}
                   />
                 </div>
               </Tabs.Tab>

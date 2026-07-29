@@ -6,6 +6,23 @@ import { FileHelper } from '../../../shared/files/FileHelper'
 import { GuestbookHelper } from '../../../shared/guestbooks/GuestbookHelper'
 import { faker } from '@faker-js/faker'
 
+const visitFileMetadataTabAndAssertExportMetadata = (
+  fileId: number,
+  shouldExist: boolean,
+  datasetVersion?: string
+) => {
+  const searchParams = new URLSearchParams({
+    id: fileId.toString()
+  })
+
+  if (datasetVersion) {
+    searchParams.set('datasetVersion', datasetVersion)
+  }
+
+  cy.visit(`${FRONTEND_BASE_PATH}/files?${searchParams.toString()}`)
+  cy.findByRole('button', { name: 'Export Metadata' }).should(shouldExist ? 'exist' : 'not.exist')
+}
+
 describe('File', () => {
   beforeEach(() => {
     TestsUtils.login().then((token) => {

@@ -2,9 +2,11 @@ import { ExternalToolsRepository } from '@/externalTools/domain/repositories/Ext
 import { FileEmbeddedExternalTool } from '@/sections/file/file-embedded-external-tool/FileEmbeddedExternalTool'
 import { FilePageHelper } from '@/sections/file/FilePageHelper'
 import { WriteError } from '@iqss/dataverse-client-javascript'
+import { ComponentProps } from 'react'
 import { ExternalToolsMother } from '@tests/component/externalTools/domain/models/ExternalToolsMother'
 import { FileExternalToolResolvedMother } from '@tests/component/externalTools/domain/models/FileExternalToolResolvedMother'
 import { FileMother } from '@tests/component/files/domain/models/FileMother'
+import { WithRepositories } from '@tests/component/WithRepositories'
 
 const externalToolsRepository: ExternalToolsRepository = {} as ExternalToolsRepository // Used for fetching the tool resolved URL
 
@@ -20,6 +22,14 @@ const fileQueryToolResolved = FileExternalToolResolvedMother.create({
   toolUrlResolved: 'https://example.com/query-tool?fileId=1'
 })
 
+const FileEmbeddedExternalToolWithRepositories = (
+  props: ComponentProps<typeof FileEmbeddedExternalTool>
+) => (
+  <WithRepositories externalToolsRepository={externalToolsRepository}>
+    <FileEmbeddedExternalTool {...props} />
+  </WithRepositories>
+)
+
 describe('FileEmbeddedExternalTool', () => {
   it('renders a single preview tool', () => {
     externalToolsRepository.getFileExternalToolResolved = cy
@@ -27,11 +37,10 @@ describe('FileEmbeddedExternalTool', () => {
       .resolves(filePreviewToolResolved)
 
     cy.customMount(
-      <FileEmbeddedExternalTool
+      <FileEmbeddedExternalToolWithRepositories
         file={testFile}
         isInView
         applicableTools={[filePreviewTool]}
-        externalToolsRepository={externalToolsRepository}
         toolTypeSelectedQueryParam={undefined}
       />
     )
@@ -67,11 +76,10 @@ describe('FileEmbeddedExternalTool', () => {
     externalToolsRepository.getFileExternalToolResolved = getFileExternalToolResolvedStub
 
     cy.customMount(
-      <FileEmbeddedExternalTool
+      <FileEmbeddedExternalToolWithRepositories
         file={testFile}
         isInView
         applicableTools={[filePreviewTool, fileQueryTool]}
-        externalToolsRepository={externalToolsRepository}
         toolTypeSelectedQueryParam="preview"
       />
     )
@@ -119,11 +127,10 @@ describe('FileEmbeddedExternalTool', () => {
       .resolves(filePreviewToolResolved)
 
     cy.customMount(
-      <FileEmbeddedExternalTool
+      <FileEmbeddedExternalToolWithRepositories
         file={testFile}
         isInView={false}
         applicableTools={[filePreviewTool]}
-        externalToolsRepository={externalToolsRepository}
         toolTypeSelectedQueryParam={undefined}
       />
     )
@@ -136,11 +143,10 @@ describe('FileEmbeddedExternalTool', () => {
         .stub()
         .rejects(new WriteError('Some js dataverse processed error message.'))
       cy.customMount(
-        <FileEmbeddedExternalTool
+        <FileEmbeddedExternalToolWithRepositories
           file={testFile}
           isInView
           applicableTools={[filePreviewTool]}
-          externalToolsRepository={externalToolsRepository}
           toolTypeSelectedQueryParam={undefined}
         />
       )
@@ -155,11 +161,10 @@ describe('FileEmbeddedExternalTool', () => {
         .rejects(new Error('Failed to fetch tool URL'))
 
       cy.customMount(
-        <FileEmbeddedExternalTool
+        <FileEmbeddedExternalToolWithRepositories
           file={testFile}
           isInView
           applicableTools={[filePreviewTool]}
-          externalToolsRepository={externalToolsRepository}
           toolTypeSelectedQueryParam={undefined}
         />
       )

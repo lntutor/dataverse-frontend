@@ -5,6 +5,7 @@ import { ExternalToolsProvider } from '@/shared/contexts/external-tools/External
 import { ExternalToolsMother } from '@tests/component/externalTools/domain/models/ExternalToolsMother'
 import { FileMetadataMother } from '@tests/component/files/domain/models/FileMetadataMother'
 import { FilePreviewMother } from '@tests/component/files/domain/models/FilePreviewMother'
+import { WithRepositories } from '@tests/component/WithRepositories'
 
 const testFilePreview = FilePreviewMother.createDefault() // text/plain file
 const testExternalToolsRepository: ExternalToolsRepository = {} as ExternalToolsRepository
@@ -21,9 +22,11 @@ describe('FileTools', () => {
 
   it('renders external tool buttons when user can download the file and there are applicable tools', () => {
     cy.customMount(
-      <ExternalToolsProvider externalToolsRepository={testExternalToolsRepository}>
-        <FileTools file={testFilePreview} canDownloadFile={true} />
-      </ExternalToolsProvider>
+      <WithRepositories externalToolsRepository={testExternalToolsRepository}>
+        <ExternalToolsProvider>
+          <FileTools file={testFilePreview} canDownloadFile={true} />
+        </ExternalToolsProvider>
+      </WithRepositories>
     )
 
     cy.findByRole('link', { name: `Preview ${testFilePreview.name}` })
@@ -49,9 +52,11 @@ describe('FileTools', () => {
 
   it('does not render external tool buttons when user cannot download the file', () => {
     cy.customMount(
-      <ExternalToolsProvider externalToolsRepository={testExternalToolsRepository}>
-        <FileTools file={testFilePreview} canDownloadFile={false} />
-      </ExternalToolsProvider>
+      <WithRepositories externalToolsRepository={testExternalToolsRepository}>
+        <ExternalToolsProvider>
+          <FileTools file={testFilePreview} canDownloadFile={false} />
+        </ExternalToolsProvider>
+      </WithRepositories>
     )
   })
 
@@ -63,9 +68,11 @@ describe('FileTools', () => {
     })
 
     cy.customMount(
-      <ExternalToolsProvider externalToolsRepository={testExternalToolsRepository}>
-        <FileTools file={fileWithoutApplicableTools} canDownloadFile={true} />
-      </ExternalToolsProvider>
+      <WithRepositories externalToolsRepository={testExternalToolsRepository}>
+        <ExternalToolsProvider>
+          <FileTools file={fileWithoutApplicableTools} canDownloadFile={true} />
+        </ExternalToolsProvider>
+      </WithRepositories>
     )
   })
 })
