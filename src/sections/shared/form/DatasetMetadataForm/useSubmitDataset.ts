@@ -68,7 +68,7 @@ export function useSubmitDataset(
           needsUpdateStore.setNeedsUpdate(true)
           toast.success(tDataset('alerts.datasetCreated.alertText'))
           navigate(
-            `${Route.DATASETS}?${QueryParamKey.PERSISTENT_ID}=${persistentId}&${QueryParamKey.VERSION}=${DatasetNonNumericVersionSearchParam.DRAFT}`
+            `${Route.UPLOAD_DATASET_FILES}?${QueryParamKey.PERSISTENT_ID}=${persistentId}&${QueryParamKey.VERSION}=${DatasetNonNumericVersionSearchParam.DRAFT}`
           )
           return
         })

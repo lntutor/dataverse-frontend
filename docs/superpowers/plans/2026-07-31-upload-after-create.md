@@ -13,6 +13,7 @@
 ### Task 1: Prove the create-mode destination
 
 **Files:**
+
 - Modify: `tests/component/sections/shared/dataset-metadata-form/DatasetMetadataForm.spec.tsx`
 
 - [ ] **Step 1: Add a location observer and failing assertion**
@@ -60,6 +61,7 @@ Expected: the successful-create test fails because the location is `/datasets?pe
 ### Task 2: Redirect successful creation to Upload Files
 
 **Files:**
+
 - Modify: `src/sections/shared/form/DatasetMetadataForm/useSubmitDataset.ts`
 
 - [ ] **Step 1: Change only the create-mode route**
@@ -85,6 +87,7 @@ Expected: all tests in the spec pass, including the upload-files destination ass
 - [ ] **Step 3: Add the changelog entry**
 
 **Files:**
+
 - Modify: `CHANGELOG.md`
 
 Add under the current Unreleased fixes:
@@ -96,6 +99,7 @@ Add under the current Unreleased fixes:
 ### Task 3: Verify and submit
 
 **Files:**
+
 - Verify: `CHANGELOG.md`
 - Verify: `src/sections/shared/form/DatasetMetadataForm/useSubmitDataset.ts`
 - Verify: `tests/component/sections/shared/dataset-metadata-form/DatasetMetadataForm.spec.tsx`

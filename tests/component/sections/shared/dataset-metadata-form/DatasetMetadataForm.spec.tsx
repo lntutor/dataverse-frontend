@@ -11,6 +11,7 @@ import { UserMother } from '../../../users/domain/models/UserMother'
 import { TemplateMother } from '@tests/component/sections/templates/TemplateMother'
 import { needsUpdateStore } from '@/notifications/domain/hooks/needsUpdateStore'
 import { WithRepositories } from '@tests/component/WithRepositories'
+import { useLocation } from 'react-router-dom'
 
 const datasetRepository: DatasetRepository = {} as DatasetRepository
 const metadataBlockInfoRepository: MetadataBlockInfoRepository = {} as MetadataBlockInfoRepository
@@ -160,6 +161,12 @@ const metadataBlocksInfoOnEditMode =
 const wrongCollectionMetadataBlocksInfo =
   MetadataBlockInfoMother.wrongCollectionMetadataBlocksInfo()
 const testUser = UserMother.create()
+
+const LocationObserver = () => {
+  const location = useLocation()
+
+  return <div data-testid="router-location">{`${location.pathname}${location.search}`}</div>
+}
 
 const fillRequiredFieldsOnCreate = () => {
   cy.findByLabelText(/^Title/i).type('Test Dataset Title')
@@ -1288,11 +1295,14 @@ describe('DatasetMetadataForm', () => {
       cy.spy(needsUpdateStore, 'setNeedsUpdate').as('setNeedsUpdate')
       cy.customMount(
         <WithRepositories datasetRepository={datasetRepository}>
-          <DatasetMetadataForm
-            mode="create"
-            collectionId="root"
-            metadataBlockInfoRepository={metadataBlockInfoRepository}
-          />
+          <>
+            <DatasetMetadataForm
+              mode="create"
+              collectionId="root"
+              metadataBlockInfoRepository={metadataBlockInfoRepository}
+            />
+            <LocationObserver />
+          </>
         </WithRepositories>
       )
       fillRequiredFieldsOnCreate()
@@ -1307,6 +1317,10 @@ describe('DatasetMetadataForm', () => {
       cy.findByText('Error').should('not.exist')
       cy.findByText('Success!').should('exist')
       cy.get('@setNeedsUpdate').should('have.been.calledWith', true)
+      cy.findByTestId('router-location').should(
+        'have.text',
+        '/datasets/upload-files?persistentId=persistentId&version=DRAFT'
+      )
     })
 
     it('on edit mode', () => {
