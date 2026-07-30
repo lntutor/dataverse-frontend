@@ -16,7 +16,7 @@ const datasetRepository: DatasetRepository = {} as DatasetRepository
 const collectionRepository: CollectionRepository = {} as CollectionRepository
 const contactRepository: ContactRepository = {} as ContactRepository
 const fileRepository = {
-  getSingleFileIdByDatasetPersistentId: () => Promise.resolve(undefined)
+  getAllByDatasetPersistentIdWithCount: () => Promise.resolve({ files: [], totalFilesCount: 0 })
 } as unknown as FileRepository
 
 describe('DatasetActionButtons', () => {

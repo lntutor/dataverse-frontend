@@ -24,13 +24,6 @@ import { FileCitationFormat, FormattedFileCitation } from '@/files/domain/models
 export class FileMockRepository implements FileRepository {
   constructor(public readonly fileMock?: File) {}
 
-  getSingleFileIdByDatasetPersistentId(
-    _datasetPersistentId: string,
-    _datasetVersion: DatasetVersion
-  ): Promise<number | undefined> {
-    return Promise.resolve(undefined)
-  }
-
   getAllByDatasetPersistentId(
     _datasetPersistentId: string,
     _datasetVersion: DatasetVersion,

@@ -64,28 +64,6 @@ export class FileJSDataverseRepository implements FileRepository {
     canEditOwnerDataset: false
   }
 
-  getSingleFileIdByDatasetPersistentId(
-    datasetPersistentId: string,
-    datasetVersion: DatasetVersion
-  ): Promise<number | undefined> {
-    const criteria = new FileCriteria()
-
-    return getDatasetFiles
-      .execute(
-        datasetPersistentId,
-        datasetVersion.number.toString(),
-        includeDeaccessioned,
-        1,
-        0,
-        DomainFileMapper.toJSFileSearchCriteria(criteria),
-        DomainFileMapper.toJSFileOrderCriteria(criteria.sortBy)
-      )
-      .then(({ files, totalFilesCount }) => (totalFilesCount === 1 ? files[0]?.id : undefined))
-      .catch((error: ReadError) => {
-        throw new Error(error.message)
-      })
-  }
-
   getAllByDatasetPersistentId(
     datasetPersistentId: string,
     datasetVersion: DatasetVersion,

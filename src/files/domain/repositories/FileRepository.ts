@@ -16,10 +16,6 @@ import { FileVersionPaginationInfo } from '../models/FileVersionPaginationInfo'
 import { FileCitationFormat, FormattedFileCitation } from '../models/FileCitation'
 
 export interface FileRepository {
-  getSingleFileIdByDatasetPersistentId: (
-    datasetPersistentId: string,
-    datasetVersion: DatasetVersion
-  ) => Promise<number | undefined>
   getAllByDatasetPersistentId: (
     datasetPersistentId: string,
     datasetVersion: DatasetVersion,
