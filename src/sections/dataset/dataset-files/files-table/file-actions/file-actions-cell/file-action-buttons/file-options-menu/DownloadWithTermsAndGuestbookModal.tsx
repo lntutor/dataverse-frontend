@@ -12,7 +12,7 @@ import { Guestbook, GuestbookCustomQuestion } from '@/guestbooks/domain/models/G
 import { useGuestbookCollectSubmission } from './useGuestbookCollectSubmission'
 import { CustomTerms as CustomTermsModel, DatasetLicense } from '@/dataset/domain/models/Dataset'
 import { useAccessRepository } from '@/sections/access/AccessRepositoryContext'
-import { useGuestbookRepository } from '@/sections/guestbooks/GuestbookRepositoryContext'
+import { useGuestbookRepositories } from '@/shared/contexts/repositories/RepositoriesProvider'
 import {
   GuestbookAnswerDTO,
   GuestbookResponseDTO
@@ -50,7 +50,7 @@ export function DownloadWithTermsAndGuestbookModal({
   const { t: tDataset } = useTranslation('dataset')
   const { user } = useSession()
   const accessRepository = useAccessRepository()
-  const guestbookRepository = useGuestbookRepository()
+  const { guestbookRepository } = useGuestbookRepositories()
 
   const hasGuestbook = guestbookId !== undefined
   const [formValues, setFormValues] = useState<GuestbookFormValues>({})

@@ -5,13 +5,13 @@ import { CollectionRepository } from '@/collection/domain/repositories/Collectio
 import { CollectionMother } from '@tests/component/collection/domain/models/CollectionMother'
 import { Guestbook } from '@/guestbooks/domain/models/Guestbook'
 import { GuestbookRepository } from '@/guestbooks/domain/repositories/GuestbookRepository'
-import { GuestbookRepositoryProvider } from '@/sections/guestbooks/GuestbookRepositoryProvider'
 import { Guestbooks } from '@/sections/guestbooks/ManageGuestbooks'
 import { UpwardHierarchyNodeMother } from '@tests/component/shared/hierarchy/domain/models/UpwardHierarchyNodeMother'
 import {
   DvObjectType,
   UpwardHierarchyNode
 } from '@/shared/hierarchy/domain/models/UpwardHierarchyNode'
+import { WithRepositories } from '@tests/component/WithRepositories'
 
 describe('ManageGuestbooks', () => {
   const collectionRepository = {} as CollectionRepository
@@ -167,14 +167,14 @@ describe('ManageGuestbooks', () => {
 
   const mountComponent = (collectionId = '17') =>
     cy.customMount(
-      <GuestbookRepositoryProvider repository={guestbookRepository}>
+      <WithRepositories guestbookRepository={guestbookRepository}>
         <Suspense fallback="loading">
           <TranslationPreloader>
             <Guestbooks collectionRepository={collectionRepository} collectionId={collectionId} />
             <LocationDisplay />
           </TranslationPreloader>
         </Suspense>
-      </GuestbookRepositoryProvider>
+      </WithRepositories>
     )
 
   const getRenderedGuestbookNames = () =>
@@ -439,13 +439,13 @@ describe('ManageGuestbooks', () => {
     )
 
     cy.customMount(
-      <GuestbookRepositoryProvider repository={guestbookRepository}>
+      <WithRepositories guestbookRepository={guestbookRepository}>
         <Suspense fallback="loading">
           <TranslationPreloader>
             <Guestbooks collectionRepository={collectionRepository} collectionId="root" />
           </TranslationPreloader>
         </Suspense>
-      </GuestbookRepositoryProvider>
+      </WithRepositories>
     )
 
     cy.findByLabelText('Include Guestbooks from Root').should('not.exist')

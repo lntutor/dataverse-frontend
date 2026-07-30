@@ -6,7 +6,6 @@ import {
   type CreateGuestbookDTO as JSDataverseCreateGuestbookDTO,
   editGuestbook,
   type EditGuestbookDTO as JSDataverseEditGuestbookDTO,
-  type GuestbookResponseSubset,
   getGuestbooksByCollectionId,
   getGuestbook,
   getGuestbookResponsesByGuestbookId,
@@ -16,6 +15,7 @@ import {
 import { GuestbookRepository } from '../../domain/repositories/GuestbookRepository'
 import { Guestbook } from '../../domain/models/Guestbook'
 import { GuestbookDTO } from '../../domain/useCases/DTOs/GuestbookDTO'
+import { GuestbookResponseSubset } from '../../domain/models/GuestbookResponse'
 
 const normalizeGuestbook = (guestbook: Guestbook): Guestbook => ({
   ...guestbook,
@@ -52,7 +52,15 @@ export class GuestbookJSDataverseRepository implements GuestbookRepository {
     limit?: number,
     offset?: number
   ): Promise<GuestbookResponseSubset> {
-    return getGuestbookResponsesByGuestbookId.execute(guestbookId, limit, offset)
+    return getGuestbookResponsesByGuestbookId
+      .execute(guestbookId, limit, offset)
+      .then((subset) => ({
+        ...subset,
+        guestbookResponses: subset.guestbookResponses.map(({ name, ...response }) => ({
+          ...response,
+          userName: name
+        }))
+      }))
   }
 
   setGuestbookEnabled(

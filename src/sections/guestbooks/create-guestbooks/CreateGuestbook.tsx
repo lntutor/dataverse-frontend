@@ -10,7 +10,7 @@ import { useCollection } from '@/sections/collection/useCollection'
 import { NotFoundPage } from '@/sections/not-found-page/NotFoundPage'
 import { BreadcrumbsGenerator } from '@/sections/shared/hierarchy/BreadcrumbsGenerator'
 import { useLoading } from '@/shared/contexts/loading/LoadingContext'
-import { useGuestbookRepository } from '../GuestbookRepositoryContext'
+import { useGuestbookRepositories } from '@/shared/contexts/repositories/RepositoriesProvider'
 import { GuestbookSkeleton } from '../GuestbookSkeleton'
 import { GuestbookForm } from '../guestbook-form/GuestbookForm'
 import { useCreateGuestbook } from './useCreateGuestbook'
@@ -28,7 +28,7 @@ export const CreateGuestbook = ({ collectionId, collectionRepository }: CreateGu
   const { t } = useTranslation('guestbooks')
   const navigate: NavigateFunction = useNavigate()
   const location = useLocation()
-  const guestbookRepository = useGuestbookRepository()
+  const { guestbookRepository } = useGuestbookRepositories()
   const { setIsLoading } = useLoading()
   const { collection, isLoading } = useCollection(collectionRepository, collectionId)
   const guestbookToCopy = (location.state as CreateGuestbookLocationState | null)?.guestbookToCopy

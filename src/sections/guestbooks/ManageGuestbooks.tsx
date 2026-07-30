@@ -16,11 +16,11 @@ import { BreadcrumbsGenerator } from '@/sections/shared/hierarchy/BreadcrumbsGen
 import { SeparationLine } from '@/sections/shared/layout/SeparationLine/SeparationLine'
 import { downloadFile } from '@/sections/shared/citation/citation-download/useDownloadCitation'
 import { useLoading } from '@/shared/contexts/loading/LoadingContext'
+import { useGuestbookRepositories } from '@/shared/contexts/repositories/RepositoriesProvider'
 import { GuestbookActionButtons } from './action-buttons/GuestbookActionButtons'
 import { CreateGuestbookButton } from './create-guestbooks/CreateGuestbookButton'
 import { GuestbookSkeleton } from './GuestbookSkeleton'
 import { GuestbooksEmptyState } from './GuestbooksEmptyState'
-import { useGuestbookRepository } from './GuestbookRepositoryContext'
 import { PreviewGuestbookModal } from './preview-modal/PreviewGuestbookModal'
 import { useGetGuestbooksByCollectionId } from './useGetGuestbooksByCollectionId'
 import styles from './Guestbooks.module.scss'
@@ -44,7 +44,7 @@ export const Guestbooks = ({ collectionRepository, collectionId }: GuestbooksPro
   const [downloadingGuestbookId, setDownloadingGuestbookId] = useState<number | undefined>()
   const [downloadResponsesError, setDownloadResponsesError] = useState<string | null>(null)
   const { setIsLoading } = useLoading()
-  const guestbookRepository = useGuestbookRepository()
+  const { guestbookRepository } = useGuestbookRepositories()
 
   const { collection, isLoading } = useCollection(collectionRepository, collectionId)
   const { guestbooks, isLoadingGuestbooksByCollectionId, errorGetGuestbooksByCollectionId } =

@@ -11,7 +11,7 @@ import { NotFoundPage } from '@/sections/not-found-page/NotFoundPage'
 import { BreadcrumbsGenerator } from '@/sections/shared/hierarchy/BreadcrumbsGenerator'
 import { useLoading } from '@/shared/contexts/loading/LoadingContext'
 import { useGetGuestbookById } from '@/sections/dataset/dataset-guestbook/useGetGuestbookById'
-import { useGuestbookRepository } from '../GuestbookRepositoryContext'
+import { useGuestbookRepositories } from '@/shared/contexts/repositories/RepositoriesProvider'
 import { GuestbookSkeleton } from '../GuestbookSkeleton'
 import { GuestbookForm } from '../guestbook-form/GuestbookForm'
 import { useEditGuestbook } from './useEditGuestbook'
@@ -30,7 +30,7 @@ export const EditGuestbook = ({
   const { t } = useTranslation('guestbooks')
   const { t: tShared } = useTranslation('shared')
   const navigate: NavigateFunction = useNavigate()
-  const guestbookRepository = useGuestbookRepository()
+  const { guestbookRepository } = useGuestbookRepositories()
   const { setIsLoading } = useLoading()
   const { collection, isLoading } = useCollection(collectionRepository, collectionId)
   const { guestbook, isLoadingGuestbook, errorGetGuestbook } = useGetGuestbookById({

@@ -12,6 +12,9 @@ import { DatasetLicenseUpdateRequest } from '../models/DatasetLicenseUpdateReque
 import { CollectionSummary } from '@/collection/domain/models/CollectionSummary'
 import { DatasetVersionPaginationInfo } from '../models/DatasetVersionPaginationInfo'
 import { DatasetUploadLimits } from '../models/DatasetUploadLimits'
+import { DatasetReview } from '../models/DatasetReview'
+import { ExportedDatasetMetadata } from '../models/ExportedDatasetMetadata'
+import { DatasetNotNumberedVersion } from '@iqss/dataverse-client-javascript'
 
 export interface DatasetRepository {
   getByPersistentId: (
@@ -61,6 +64,11 @@ export interface DatasetRepository {
     version: string,
     format: CitationFormat
   ) => Promise<FormattedCitation>
+  exportDatasetMetadata: (
+    datasetId: string | number,
+    exporter: string,
+    version?: DatasetNotNumberedVersion.LATEST_PUBLISHED | DatasetNotNumberedVersion.DRAFT
+  ) => Promise<ExportedDatasetMetadata>
   updateTermsOfAccess: (datasetId: string | number, termsOfAccess: TermsOfAccess) => Promise<void>
   updateDatasetLicense: (
     datasetId: string | number,
@@ -70,4 +78,5 @@ export interface DatasetRepository {
   unlink(datasetId: string | number, collectionIdOrAlias: string | number): Promise<void>
   getDatasetLinkedCollections: (datasetId: string | number) => Promise<CollectionSummary[]>
   getDatasetUploadLimits: (datasetId: string | number) => Promise<DatasetUploadLimits>
+  getDatasetReviews: (datasetId: string | number) => Promise<DatasetReview[]>
 }

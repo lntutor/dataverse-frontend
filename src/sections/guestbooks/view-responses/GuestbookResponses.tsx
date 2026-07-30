@@ -16,8 +16,8 @@ import { SeparationLine } from '@/sections/shared/layout/SeparationLine/Separati
 import { downloadFile } from '@/sections/shared/citation/citation-download/useDownloadCitation'
 import { useGetGuestbookById } from '@/sections/dataset/dataset-guestbook/useGetGuestbookById'
 import { useLoading } from '@/shared/contexts/loading/LoadingContext'
+import { useGuestbookRepositories } from '@/shared/contexts/repositories/RepositoriesProvider'
 import { GuestbookSkeleton } from '../GuestbookSkeleton'
-import { useGuestbookRepository } from '../GuestbookRepositoryContext'
 import { useGetGuestbookResponsesByGuestbookId } from './useGetGuestbookResponsesByGuestbookId'
 import styles from '../Guestbooks.module.scss'
 
@@ -55,7 +55,7 @@ export const GuestbookResponses = ({
     new GuestbookResponsesPaginationInfo()
   )
   const { setIsLoading } = useLoading()
-  const guestbookRepository = useGuestbookRepository()
+  const { guestbookRepository } = useGuestbookRepositories()
   const { collection, isLoading } = useCollection(collectionRepository, collectionId)
   const { guestbook, isLoadingGuestbook, errorGetGuestbook } = useGetGuestbookById({
     guestbookRepository,

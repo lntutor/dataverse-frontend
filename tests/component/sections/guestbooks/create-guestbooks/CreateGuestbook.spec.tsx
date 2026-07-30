@@ -4,13 +4,13 @@ import { useLocation } from 'react-router-dom'
 import { CreateGuestbook } from '@/sections/guestbooks/create-guestbooks/CreateGuestbook'
 import { CreateGuestbookButton } from '@/sections/guestbooks/create-guestbooks/CreateGuestbookButton'
 import { useCreateGuestbook } from '@/sections/guestbooks/create-guestbooks/useCreateGuestbook'
-import { GuestbookRepositoryProvider } from '@/sections/guestbooks/GuestbookRepositoryProvider'
 import { CollectionRepository } from '@/collection/domain/repositories/CollectionRepository'
 import { Guestbook } from '@/guestbooks/domain/models/Guestbook'
 import { GuestbookRepository } from '@/guestbooks/domain/repositories/GuestbookRepository'
 import { GuestbookDTO } from '@/guestbooks/domain/useCases/DTOs/GuestbookDTO'
 import { CollectionMother } from '@tests/component/collection/domain/models/CollectionMother'
 import { createGuestbookRepositoryStub } from '../createGuestbookRepositoryStub'
+import { WithRepositories } from '@tests/component/WithRepositories'
 
 type CreateGuestbookStub = sinon.SinonStub<
   [collectionIdOrAlias: number | string, guestbook: GuestbookDTO],
@@ -80,15 +80,15 @@ describe('CreateGuestbook', () => {
 
   const mountCreateGuestbook = () =>
     cy.customMount(
-      <GuestbookRepositoryProvider repository={guestbookRepository}>
+      <WithRepositories guestbookRepository={guestbookRepository}>
         <CreateGuestbook collectionId="root" collectionRepository={collectionRepository} />
-      </GuestbookRepositoryProvider>
+      </WithRepositories>
     )
   const mountCopyGuestbook = () =>
     cy.customMount(
-      <GuestbookRepositoryProvider repository={guestbookRepository}>
+      <WithRepositories guestbookRepository={guestbookRepository}>
         <CreateGuestbook collectionId="root" collectionRepository={collectionRepository} />
-      </GuestbookRepositoryProvider>,
+      </WithRepositories>,
       [{ pathname: '/root/guestbooks/create', state: { guestbookToCopy: sourceGuestbookToCopy } }]
     )
 

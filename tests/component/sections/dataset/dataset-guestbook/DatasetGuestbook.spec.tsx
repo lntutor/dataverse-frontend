@@ -1,10 +1,10 @@
 import { DatasetGuestbook } from '@/sections/dataset/dataset-guestbook/DatasetGuestbook'
 import { DatasetContext } from '@/sections/dataset/DatasetContext'
-import { GuestbookRepositoryProvider } from '@/sections/guestbooks/GuestbookRepositoryProvider'
 import { GuestbookRepository } from '@/guestbooks/domain/repositories/GuestbookRepository'
 import { Guestbook } from '@/guestbooks/domain/models/Guestbook'
 import { Dataset as DatasetModel } from '@/dataset/domain/models/Dataset'
 import { DatasetMother } from '@tests/component/dataset/domain/models/DatasetMother'
+import { WithRepositories } from '@tests/component/WithRepositories'
 
 const guestbook: Guestbook = {
   id: 10,
@@ -41,7 +41,7 @@ describe('DatasetGuestbook', () => {
     dataset: DatasetModel = DatasetMother.create({ guestbookId: guestbook.id })
   ) =>
     cy.customMount(
-      <GuestbookRepositoryProvider repository={guestbookRepository}>
+      <WithRepositories guestbookRepository={guestbookRepository}>
         <DatasetContext.Provider
           value={{
             dataset,
@@ -50,7 +50,7 @@ describe('DatasetGuestbook', () => {
           }}>
           <DatasetGuestbook />
         </DatasetContext.Provider>
-      </GuestbookRepositoryProvider>
+      </WithRepositories>
     )
 
   it('renders a spinner while the guestbook is loading', () => {

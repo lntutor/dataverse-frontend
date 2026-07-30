@@ -6,8 +6,8 @@ import { Guestbook } from '@/guestbooks/domain/models/Guestbook'
 import { AccessRepository } from '@/access/domain/repositories/AccessRepository'
 import { GuestbookRepository } from '@/guestbooks/domain/repositories/GuestbookRepository'
 import { AccessRepositoryProvider } from '@/sections/access/AccessRepositoryProvider'
-import { GuestbookRepositoryProvider } from '@/sections/guestbooks/GuestbookRepositoryProvider'
 import { useTranslation } from 'react-i18next'
+import { WithRepositories } from '@tests/component/WithRepositories'
 
 describe('AccessFileMenu', () => {
   const guestbook: Guestbook = {
@@ -220,7 +220,7 @@ describe('AccessFileMenu', () => {
     cy.customMount(
       <Suspense fallback="loading">
         <TranslationPreloader />
-        <GuestbookRepositoryProvider repository={guestbookRepository}>
+        <WithRepositories guestbookRepository={guestbookRepository}>
           <AccessRepositoryProvider repository={accessRepository}>
             <AccessFileMenu
               id={1}
@@ -233,7 +233,7 @@ describe('AccessFileMenu', () => {
               datasetPersistentId="doi:10.5072/FK2/FILEPAGE"
             />
           </AccessRepositoryProvider>
-        </GuestbookRepositoryProvider>
+        </WithRepositories>
       </Suspense>
     )
 
@@ -357,7 +357,7 @@ describe('AccessFileMenu', () => {
     cy.customMount(
       <Suspense fallback="loading">
         <TranslationPreloader />
-        <GuestbookRepositoryProvider repository={guestbookRepository}>
+        <WithRepositories guestbookRepository={guestbookRepository}>
           <AccessRepositoryProvider repository={accessRepository}>
             <AccessFileMenu
               id={1}
@@ -373,7 +373,7 @@ describe('AccessFileMenu', () => {
               }}
             />
           </AccessRepositoryProvider>
-        </GuestbookRepositoryProvider>
+        </WithRepositories>
       </Suspense>
     )
 
