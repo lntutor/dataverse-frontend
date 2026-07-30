@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import DOMPurify from 'dompurify'
+import parse from 'html-react-parser'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Button, Modal, Spinner, Stack } from '@iqss/dataverse-design-system'
@@ -81,6 +83,9 @@ export function PublishDatasetModal({
   )?.value
 
   const shouldShowCustomPopupText = Boolean(datasetPublishPopupCustomText?.trim())
+  const sanitizedDatasetPublishPopupCustomText = datasetPublishPopupCustomText
+    ? DOMPurify.sanitize(datasetPublishPopupCustomText, { USE_PROFILES: { html: true } })
+    : ''
   const shouldShowDisclaimer = Boolean(publishDisclaimerText?.trim())
   const [isDisclaimerAccepted, setIsDisclaimerAccepted] = useState(false)
 
@@ -119,7 +124,9 @@ export function PublishDatasetModal({
 
           {shouldShowCustomPopupText && (
             <div className={styles.customPopupTextBlock}>
-              <p className={styles.customPopupText}>{datasetPublishPopupCustomText}</p>
+              <p className={styles.customPopupText}>
+                {parse(sanitizedDatasetPublishPopupCustomText)}
+              </p>
             </div>
           )}
 
