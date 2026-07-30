@@ -3,9 +3,9 @@ import { ReadError } from '@iqss/dataverse-client-javascript'
 import { Guestbook } from '@/guestbooks/domain/models/Guestbook'
 import { EventType, GuestbookResponse } from '@/guestbooks/domain/models/GuestbookResponse'
 import { GuestbookRepository } from '@/guestbooks/domain/repositories/GuestbookRepository'
-import { GuestbookRepositoryProvider } from '@/sections/guestbooks/GuestbookRepositoryProvider'
 import { GuestbookResponses } from '@/sections/guestbooks/view-responses/GuestbookResponses'
 import { CollectionMother } from '@tests/component/collection/domain/models/CollectionMother'
+import { WithRepositories } from '@tests/component/WithRepositories'
 
 const guestbook: Guestbook = {
   id: 10,
@@ -97,13 +97,13 @@ describe('GuestbookResponses', () => {
 
   const mountComponent = () =>
     cy.customMount(
-      <GuestbookRepositoryProvider repository={guestbookRepository}>
+      <WithRepositories guestbookRepository={guestbookRepository}>
         <GuestbookResponses
           collectionId="17"
           guestbookId={guestbook.id}
           collectionRepository={collectionRepository}
         />
-      </GuestbookRepositoryProvider>
+      </WithRepositories>
     )
 
   it('renders guestbook response page details and rows', () => {

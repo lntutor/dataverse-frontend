@@ -1,9 +1,9 @@
 import { CollectionRepository } from '@/collection/domain/repositories/CollectionRepository'
 import { Guestbook } from '@/guestbooks/domain/models/Guestbook'
 import { GuestbookRepository } from '@/guestbooks/domain/repositories/GuestbookRepository'
-import { GuestbookRepositoryProvider } from '@/sections/guestbooks/GuestbookRepositoryProvider'
 import { EditGuestbook } from '@/sections/guestbooks/edit-guestbook/EditGuestbook'
 import { CollectionMother } from '@tests/component/collection/domain/models/CollectionMother'
+import { WithRepositories } from '@tests/component/WithRepositories'
 
 const guestbook: Guestbook = {
   id: 10,
@@ -58,13 +58,13 @@ describe('EditGuestbook', () => {
 
   const mountComponent = () =>
     cy.customMount(
-      <GuestbookRepositoryProvider repository={guestbookRepository}>
+      <WithRepositories guestbookRepository={guestbookRepository}>
         <EditGuestbook
           collectionId="17"
           guestbookId={guestbook.id}
           collectionRepository={collectionRepository}
         />
-      </GuestbookRepositoryProvider>
+      </WithRepositories>
     )
 
   it('prefills fields correctly', () => {
