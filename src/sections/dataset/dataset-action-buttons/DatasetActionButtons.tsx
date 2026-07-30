@@ -10,6 +10,8 @@ import { ContactButton } from '@/sections/shared/contact/ContactButton'
 import { ContactRepository } from '@/contact/domain/repositories/ContactRepository'
 import { LinkAndUnlinkActions } from './link-and-unlink-actions/LinkAndUnlinkActions'
 import styles from './DatasetActionButtons.module.scss'
+import { useDatasetRepositories } from '@/shared/contexts/repositories/RepositoriesProvider'
+import { useSingleFileId } from './access-dataset-menu/useSingleFileId'
 
 interface DatasetActionButtonsProps {
   dataset: Dataset
@@ -18,6 +20,8 @@ interface DatasetActionButtonsProps {
 
 export function DatasetActionButtons({ dataset, contactRepository }: DatasetActionButtonsProps) {
   const { t } = useTranslation('dataset')
+  const { fileRepository } = useDatasetRepositories()
+  const singleFileId = useSingleFileId(fileRepository, dataset.persistentId, dataset.version)
 
   const isCurrentVersionDeaccessioned =
     dataset.version.publishingStatus === DatasetPublishingStatus.DEACCESSIONED
@@ -25,6 +29,7 @@ export function DatasetActionButtons({ dataset, contactRepository }: DatasetActi
   return (
     <ButtonGroup aria-label={t('datasetActionButtons.title')} vertical className={styles.group}>
       <AccessDatasetMenu
+        singleFileId={singleFileId}
         datasetNumericId={dataset.id}
         version={dataset.version}
         permissions={dataset.permissions}

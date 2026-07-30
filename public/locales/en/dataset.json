@@ -79,6 +79,8 @@
       "title": "Access Dataset",
       "downloadOptions": {
         "header": "Download Options",
+        "file": "Download File",
+        "archivalFile": "Archival Format (.tab)",
         "zip": "Download ZIP",
         "originalZip": "Original Format ZIP",
         "archivalZip": "Archival Format (.tab) ZIP"

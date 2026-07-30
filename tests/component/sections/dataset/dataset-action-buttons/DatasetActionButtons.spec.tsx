@@ -10,10 +10,14 @@ import {
 } from '../../../dataset/domain/models/DatasetMother'
 import { ContactRepository } from '@/contact/domain/repositories/ContactRepository'
 import { WithRepositories } from '@tests/component/WithRepositories'
+import { FileRepository } from '@/files/domain/repositories/FileRepository'
 
 const datasetRepository: DatasetRepository = {} as DatasetRepository
 const collectionRepository: CollectionRepository = {} as CollectionRepository
 const contactRepository: ContactRepository = {} as ContactRepository
+const fileRepository = {
+  getSingleFileIdByDatasetPersistentId: () => Promise.resolve(undefined)
+} as unknown as FileRepository
 
 describe('DatasetActionButtons', () => {
   it('renders the DatasetActionButtons with the Publish button', () => {
@@ -28,7 +32,8 @@ describe('DatasetActionButtons', () => {
     cy.mountAuthenticated(
       <WithRepositories
         collectionRepository={collectionRepository}
-        datasetRepository={datasetRepository}>
+        datasetRepository={datasetRepository}
+        fileRepository={fileRepository}>
         <DatasetActionButtons dataset={dataset} contactRepository={contactRepository} />
       </WithRepositories>
     )
@@ -58,7 +63,8 @@ describe('DatasetActionButtons', () => {
     cy.mountAuthenticated(
       <WithRepositories
         collectionRepository={collectionRepository}
-        datasetRepository={datasetRepository}>
+        datasetRepository={datasetRepository}
+        fileRepository={fileRepository}>
         <DatasetActionButtons dataset={dataset} contactRepository={contactRepository} />
       </WithRepositories>
     )
@@ -79,7 +85,8 @@ describe('DatasetActionButtons', () => {
     cy.mountAuthenticated(
       <WithRepositories
         collectionRepository={collectionRepository}
-        datasetRepository={datasetRepository}>
+        datasetRepository={datasetRepository}
+        fileRepository={fileRepository}>
         <DatasetActionButtons dataset={dataset} contactRepository={contactRepository} />
       </WithRepositories>
     )

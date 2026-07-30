@@ -79,6 +79,8 @@
       "title": "Acceder al dataset",
       "downloadOptions": {
         "header": "Opciones de descarga",
+        "file": "Descargar archivo",
+        "archivalFile": "Formato de archivo (.tab)",
         "zip": "Descargar ZIP",
         "originalZip": "ZIP en formato original",
         "archivalZip": "ZIP en formato de fichero (.tab)"

@@ -23,6 +23,7 @@ import {
 // TODO: add compute feature
 
 interface AccessDatasetMenuProps {
+  singleFileId?: number
   datasetNumericId?: number | string
   version: DatasetVersion
   permissions: DatasetPermissions
@@ -36,6 +37,7 @@ interface AccessDatasetMenuProps {
 }
 
 export function AccessDatasetMenu({
+  singleFileId,
   datasetNumericId,
   version,
   permissions,
@@ -98,6 +100,7 @@ export function AccessDatasetMenu({
           {t('datasetActionButtons.accessDataset.downloadOptions.header')} <DownloadIcon />
         </DropdownHeader>
         <DatasetDownloadOptions
+          singleFileId={singleFileId}
           datasetNumericId={datasetNumericId}
           hasOneTabularFileAtLeast={hasOneTabularFileAtLeast}
           fileDownloadSizes={fileDownloadSizes}
@@ -110,7 +113,8 @@ export function AccessDatasetMenu({
         <DownloadWithTermsAndGuestbookModal
           show={showDownloadWithTermsAndGuestbookModal}
           handleClose={() => setShowDownloadWithTermsAndGuestbookModal(false)}
-          datasetId={datasetNumericId} // TODO: we should allow this to pass persistentId when we have the backend support for guestbook submission with persistentId
+          fileId={singleFileId}
+          datasetId={singleFileId === undefined ? datasetNumericId : undefined} // TODO: we should allow this to pass persistentId when we have the backend support for guestbook submission with persistentId
           datasetPersistentId={persistentId}
           guestbookId={guestbookId}
           format={selectedDownloadFormat}
@@ -123,6 +127,7 @@ export function AccessDatasetMenu({
 }
 
 interface DatasetDownloadOptionsProps {
+  singleFileId?: number
   datasetNumericId?: number | string
   hasOneTabularFileAtLeast: boolean
   fileDownloadSizes: FileDownloadSize[]
@@ -131,6 +136,7 @@ interface DatasetDownloadOptionsProps {
 }
 
 const DatasetDownloadOptions = ({
+  singleFileId,
   datasetNumericId,
   hasOneTabularFileAtLeast,
   fileDownloadSizes,
@@ -150,14 +156,15 @@ const DatasetDownloadOptions = ({
       return
     }
 
-    if (datasetNumericId === undefined) {
+    if (singleFileId === undefined && datasetNumericId === undefined) {
       return
     }
 
     event.preventDefault()
     void requestSignedDownloadUrlFromAccessApi({
       accessRepository,
-      datasetId: datasetNumericId,
+      fileId: singleFileId,
+      datasetId: singleFileId === undefined ? datasetNumericId : undefined,
       fileIds: undefined,
       guestbookResponse: EMPTY_GUESTBOOK_RESPONSE,
       format: mode
@@ -180,19 +187,31 @@ const DatasetDownloadOptions = ({
     <>
       <DropdownButtonItem
         onClick={(event) => handleDirectDownload(event, FileDownloadMode.ORIGINAL)}>
-        {t('datasetActionButtons.accessDataset.downloadOptions.originalZip')} (
-        {getFormattedFileSize(FileDownloadMode.ORIGINAL)})
+        {t(
+          singleFileId === undefined
+            ? 'datasetActionButtons.accessDataset.downloadOptions.originalZip'
+            : 'datasetActionButtons.accessDataset.downloadOptions.file'
+        )}{' '}
+        ({getFormattedFileSize(FileDownloadMode.ORIGINAL)})
       </DropdownButtonItem>
       <DropdownButtonItem
         onClick={(event) => handleDirectDownload(event, FileDownloadMode.ARCHIVAL)}>
-        {t('datasetActionButtons.accessDataset.downloadOptions.archivalZip')} (
-        {getFormattedFileSize(FileDownloadMode.ARCHIVAL)})
+        {t(
+          singleFileId === undefined
+            ? 'datasetActionButtons.accessDataset.downloadOptions.archivalZip'
+            : 'datasetActionButtons.accessDataset.downloadOptions.archivalFile'
+        )}{' '}
+        ({getFormattedFileSize(FileDownloadMode.ARCHIVAL)})
       </DropdownButtonItem>
     </>
   ) : (
     <DropdownButtonItem onClick={(event) => handleDirectDownload(event, FileDownloadMode.ORIGINAL)}>
-      {t('datasetActionButtons.accessDataset.downloadOptions.zip')} (
-      {getFormattedFileSize(FileDownloadMode.ORIGINAL)})
+      {t(
+        singleFileId === undefined
+          ? 'datasetActionButtons.accessDataset.downloadOptions.zip'
+          : 'datasetActionButtons.accessDataset.downloadOptions.file'
+      )}{' '}
+      ({getFormattedFileSize(FileDownloadMode.ORIGINAL)})
     </DropdownButtonItem>
   )
 }

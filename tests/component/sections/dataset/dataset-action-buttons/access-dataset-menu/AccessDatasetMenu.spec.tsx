@@ -209,6 +209,141 @@ describe('AccessDatasetMenu', () => {
     cy.get('body').should('not.contain.text', 'Archival Format (.tab) ZIP')
   })
 
+  it('displays Download File for a single non-tabular file', () => {
+    const version = DatasetVersionMother.createReleased()
+    const permissions = DatasetPermissionsMother.createWithFilesDownloadAllowed()
+    const fileDownloadSizes = [
+      DatasetFileDownloadSizeMother.createOriginal({ value: 2000, unit: FileSizeUnit.BYTES })
+    ]
+
+    cy.customMount(
+      <AccessDatasetMenu
+        singleFileId={42}
+        datasetNumericId={2}
+        fileDownloadSizes={fileDownloadSizes}
+        hasOneTabularFileAtLeast={false}
+        version={version}
+        permissions={permissions}
+        fileStore="s3"
+        persistentId="doi:10.5072/FK2/ABCDEFGH"
+      />
+    )
+
+    cy.findByRole('button', { name: 'Access Dataset' }).click()
+    cy.findByRole('button', { name: 'Download File (2 KB)' }).should('exist')
+    cy.get('body').should('not.contain.text', 'Download ZIP')
+  })
+
+  it('displays file labels for a single tabular file', () => {
+    const version = DatasetVersionMother.createReleased()
+    const permissions = DatasetPermissionsMother.createWithFilesDownloadAllowed()
+    const fileDownloadSizes = [
+      DatasetFileDownloadSizeMother.createOriginal({ value: 2000, unit: FileSizeUnit.BYTES }),
+      DatasetFileDownloadSizeMother.createArchival({ value: 4000, unit: FileSizeUnit.BYTES })
+    ]
+
+    cy.customMount(
+      <AccessDatasetMenu
+        singleFileId={42}
+        datasetNumericId={2}
+        fileDownloadSizes={fileDownloadSizes}
+        hasOneTabularFileAtLeast={true}
+        version={version}
+        permissions={permissions}
+        fileStore="s3"
+        persistentId="doi:10.5072/FK2/ABCDEFGH"
+      />
+    )
+
+    cy.findByRole('button', { name: 'Access Dataset' }).click()
+    cy.findByRole('button', { name: 'Download File (2 KB)' }).should('exist')
+    cy.findByRole('button', { name: 'Archival Format (.tab) (3.9 KB)' }).should('exist')
+    cy.get('body').should('not.contain.text', 'ZIP')
+  })
+
+  it('submits a direct single-file download with the file ID', () => {
+    const version = DatasetVersionMother.createReleased()
+    const permissions = DatasetPermissionsMother.createWithFilesDownloadAllowed()
+    const fileDownloadSizes = [
+      DatasetFileDownloadSizeMother.createOriginal({ value: 2000, unit: FileSizeUnit.BYTES })
+    ]
+    const submitGuestbookForDatafileDownload = cy.stub().resolves('signed-url-datafile')
+
+    cy.window().then((window) => {
+      cy.stub(window.HTMLAnchorElement.prototype, 'click')
+    })
+
+    cy.customMount(
+      withAccessRepository(
+        <AccessDatasetMenu
+          singleFileId={42}
+          datasetNumericId={2}
+          fileDownloadSizes={fileDownloadSizes}
+          hasOneTabularFileAtLeast={false}
+          version={version}
+          permissions={permissions}
+          fileStore="s3"
+          persistentId="doi:10.5072/FK2/ABCDEFGH"
+        />,
+        { submitGuestbookForDatafileDownload }
+      )
+    )
+
+    cy.findByRole('button', { name: 'Access Dataset' }).click()
+    cy.findByRole('button', { name: /Download File/ }).click()
+
+    cy.wrap(submitGuestbookForDatafileDownload).should('have.been.calledOnce')
+    cy.wrap(submitGuestbookForDatafileDownload).its('firstCall.args.0').should('eq', 42)
+  })
+
+  it('submits a guarded single-file download with the file ID', () => {
+    const version = DatasetVersionMother.createReleased()
+    const permissions =
+      DatasetPermissionsMother.createWithFilesDownloadAllowedButNotUpdatePermissions()
+    const fileDownloadSizes = [
+      DatasetFileDownloadSizeMother.createOriginal({ value: 2000, unit: FileSizeUnit.BYTES })
+    ]
+    const guestbookRepository = createGuestbookRepository()
+    const submitGuestbookForDatafileDownload = cy.stub().resolves('signed-url-datafile')
+
+    cy.window().then((window) => {
+      cy.stub(window.HTMLAnchorElement.prototype, 'click')
+    })
+
+    cy.customMount(
+      withGuestbookRepository(
+        withAccessRepository(
+          <Suspense fallback="loading">
+            <TranslationPreloader>
+              <AccessDatasetMenu
+                singleFileId={42}
+                datasetNumericId={2}
+                fileDownloadSizes={fileDownloadSizes}
+                hasOneTabularFileAtLeast={false}
+                version={version}
+                permissions={permissions}
+                fileStore="s3"
+                persistentId="doi:10.5072/FK2/ABCDEFGH"
+                guestbookId={10}
+              />
+            </TranslationPreloader>
+          </Suspense>,
+          { submitGuestbookForDatafileDownload }
+        ),
+        guestbookRepository
+      )
+    )
+
+    cy.findByRole('button', { name: 'Access Dataset' }).click()
+    cy.findByRole('button', { name: /Download File/ }).click()
+    cy.findByLabelText(/name/i).type('Test User')
+    cy.findByLabelText(/email/i).type('test.user@example.com')
+    cy.findByRole('button', { name: 'Accept' }).click()
+
+    cy.wrap(submitGuestbookForDatafileDownload).should('have.been.calledOnce')
+    cy.wrap(submitGuestbookForDatafileDownload).its('firstCall.args.0').should('eq', 42)
+  })
+
   it('renders empty size text in non-tabular mode when original size is missing', () => {
     const version = DatasetVersionMother.createReleased()
     const permissions = DatasetPermissionsMother.createWithFilesDownloadAllowed()
