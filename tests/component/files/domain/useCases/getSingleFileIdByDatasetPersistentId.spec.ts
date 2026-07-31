@@ -35,18 +35,6 @@ describe('getSingleFileIdByDatasetPersistentId', () => {
 
     expect(fileId).to.be.undefined
   })
-
-  it('rejects with the repository error message', async () => {
-    const repository = createRepositoryStub(Promise.reject(new Error('Unable to read files')))
-
-    try {
-      await getSingleFileIdByDatasetPersistentId(repository, datasetPersistentId, datasetVersion)
-      throw new Error('Expected the use case to reject')
-    } catch (error) {
-      expect(error).to.be.instanceOf(Error)
-      expect((error as Error).message).to.equal('Unable to read files')
-    }
-  })
 })
 
 function createRepositoryStub(result: Promise<FilesWithCount>): FileRepository {

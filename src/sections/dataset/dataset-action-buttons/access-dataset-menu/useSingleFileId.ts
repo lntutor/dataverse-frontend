@@ -3,26 +3,34 @@ import { DatasetVersion } from '@/dataset/domain/models/Dataset'
 import { FileRepository } from '@/files/domain/repositories/FileRepository'
 import { getSingleFileIdByDatasetPersistentId } from '@/files/domain/useCases/getSingleFileIdByDatasetPersistentId'
 
+interface SingleFileIdState {
+  singleFileId: number | undefined
+  isLoading: boolean
+}
+
 export function useSingleFileId(
   fileRepository: FileRepository,
   datasetPersistentId: string,
   datasetVersion: DatasetVersion
-): number | undefined {
-  const [singleFileId, setSingleFileId] = useState<number | undefined>()
+): SingleFileIdState {
+  const [state, setState] = useState<SingleFileIdState>({
+    singleFileId: undefined,
+    isLoading: true
+  })
 
   useEffect(() => {
     let cancelled = false
 
-    setSingleFileId(undefined)
+    setState({ singleFileId: undefined, isLoading: true })
     void getSingleFileIdByDatasetPersistentId(fileRepository, datasetPersistentId, datasetVersion)
       .then((fileId) => {
         if (!cancelled) {
-          setSingleFileId(fileId)
+          setState({ singleFileId: fileId, isLoading: false })
         }
       })
       .catch(() => {
         if (!cancelled) {
-          setSingleFileId(undefined)
+          setState({ singleFileId: undefined, isLoading: false })
         }
       })
 
@@ -31,5 +39,5 @@ export function useSingleFileId(
     }
   }, [fileRepository, datasetPersistentId, datasetVersion])
 
-  return singleFileId
+  return state
 }

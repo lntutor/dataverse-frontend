@@ -9,14 +9,25 @@ describe('useSingleFileId', () => {
   const persistentId = 'doi:10.5072/FK2/ABC123'
   const version = DatasetVersionMother.createRealistic()
 
-  it('resolves the single file ID', async () => {
-    const repository = createRepositoryStub(
-      Promise.resolve({ files: [{ id: 42 } as FilePreview], totalFilesCount: 1 })
-    )
+  it('transitions from loading to a resolved single file ID', async () => {
+    let resolveFiles: (files: FilesWithCount) => void = () => undefined
+    const pendingFiles = new Promise<FilesWithCount>((resolve) => {
+      resolveFiles = resolve
+    })
+    const repository = createRepositoryStub(pendingFiles)
 
     const { result } = renderHook(() => useSingleFileId(repository, persistentId, version))
 
-    await waitFor(() => expect(result.current).to.equal(42))
+    expect(result.current).to.deep.equal({ singleFileId: undefined, isLoading: true })
+
+    await act(async () => {
+      resolveFiles({ files: [{ id: 42 } as FilePreview], totalFilesCount: 1 })
+      await pendingFiles
+    })
+
+    await waitFor(() =>
+      expect(result.current).to.deep.equal({ singleFileId: 42, isLoading: false })
+    )
   })
 
   it('keeps the ID undefined for a multi-file dataset', async () => {
@@ -26,10 +37,9 @@ describe('useSingleFileId', () => {
 
     const { result } = renderHook(() => useSingleFileId(repository, persistentId, version))
 
-    await waitFor(
-      () => expect(repository.getAllByDatasetPersistentIdWithCount).to.have.been.calledOnce
+    await waitFor(() =>
+      expect(result.current).to.deep.equal({ singleFileId: undefined, isLoading: false })
     )
-    expect(result.current).to.be.undefined
   })
 
   it('falls back to undefined when discovery fails', async () => {
@@ -37,10 +47,9 @@ describe('useSingleFileId', () => {
 
     const { result } = renderHook(() => useSingleFileId(repository, persistentId, version))
 
-    await waitFor(
-      () => expect(repository.getAllByDatasetPersistentIdWithCount).to.have.been.calledOnce
+    await waitFor(() =>
+      expect(result.current).to.deep.equal({ singleFileId: undefined, isLoading: false })
     )
-    expect(result.current).to.be.undefined
   })
 
   it('ignores a resolution after unmount', async () => {

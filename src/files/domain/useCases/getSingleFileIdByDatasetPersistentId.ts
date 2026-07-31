@@ -15,9 +15,5 @@ export async function getSingleFileIdByDatasetPersistentId(
     new FilePaginationInfo(1, 1),
     undefined,
     true
-  )
-    .then(({ files, totalFilesCount }) => (totalFilesCount === 1 ? files[0]?.id : undefined))
-    .catch((error: Error) => {
-      throw new Error(error.message)
-    })
+  ).then(({ files, totalFilesCount }) => (totalFilesCount === 1 ? files[0]?.id : undefined))
 }

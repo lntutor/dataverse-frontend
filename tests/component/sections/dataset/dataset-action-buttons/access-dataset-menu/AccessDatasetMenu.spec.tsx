@@ -209,6 +209,35 @@ describe('AccessDatasetMenu', () => {
     cy.get('body').should('not.contain.text', 'Archival Format (.tab) ZIP')
   })
 
+  it('does not display download options while single-file discovery is loading', () => {
+    const version = DatasetVersionMother.createReleased()
+    const permissions = DatasetPermissionsMother.createWithFilesDownloadAllowed()
+    const fileDownloadSizes = [
+      DatasetFileDownloadSizeMother.createOriginal({ value: 2000, unit: FileSizeUnit.BYTES })
+    ]
+
+    cy.customMount(
+      <Suspense fallback="loading">
+        <TranslationPreloader>
+          <AccessDatasetMenu
+            isSingleFileIdLoading
+            datasetNumericId={2}
+            fileDownloadSizes={fileDownloadSizes}
+            hasOneTabularFileAtLeast={false}
+            version={version}
+            permissions={permissions}
+            fileStore="s3"
+            persistentId="doi:10.5072/FK2/ABCDEFGH"
+          />
+        </TranslationPreloader>
+      </Suspense>
+    )
+
+    cy.findByRole('button', { name: 'Access Dataset' }).click()
+    cy.findByRole('heading', { name: 'Download Options' }).should('not.exist')
+    cy.findByRole('button', { name: 'Download ZIP (2 KB)' }).should('not.exist')
+  })
+
   it('displays Download File for a single non-tabular file', () => {
     const version = DatasetVersionMother.createReleased()
     const permissions = DatasetPermissionsMother.createWithFilesDownloadAllowed()

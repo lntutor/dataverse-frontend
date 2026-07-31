@@ -24,6 +24,7 @@ import {
 
 interface AccessDatasetMenuProps {
   singleFileId?: number
+  isSingleFileIdLoading?: boolean
   datasetNumericId?: number | string
   version: DatasetVersion
   permissions: DatasetPermissions
@@ -38,6 +39,7 @@ interface AccessDatasetMenuProps {
 
 export function AccessDatasetMenu({
   singleFileId,
+  isSingleFileIdLoading = false,
   datasetNumericId,
   version,
   permissions,
@@ -96,17 +98,21 @@ export function AccessDatasetMenu({
         title={t('datasetActionButtons.accessDataset.title')}
         asButtonGroup
         variant="primary">
-        <DropdownHeader className="d-flex align-items-center gap-1">
-          {t('datasetActionButtons.accessDataset.downloadOptions.header')} <DownloadIcon />
-        </DropdownHeader>
-        <DatasetDownloadOptions
-          singleFileId={singleFileId}
-          datasetNumericId={datasetNumericId}
-          hasOneTabularFileAtLeast={hasOneTabularFileAtLeast}
-          fileDownloadSizes={fileDownloadSizes}
-          requiresTermsOrGuestbook={shouldShowModal}
-          onDownloadWithGuestbook={handleDownloadWithGuestbook}
-        />
+        {!isSingleFileIdLoading && (
+          <>
+            <DropdownHeader className="d-flex align-items-center gap-1">
+              {t('datasetActionButtons.accessDataset.downloadOptions.header')} <DownloadIcon />
+            </DropdownHeader>
+            <DatasetDownloadOptions
+              singleFileId={singleFileId}
+              datasetNumericId={datasetNumericId}
+              hasOneTabularFileAtLeast={hasOneTabularFileAtLeast}
+              fileDownloadSizes={fileDownloadSizes}
+              requiresTermsOrGuestbook={shouldShowModal}
+              onDownloadWithGuestbook={handleDownloadWithGuestbook}
+            />
+          </>
+        )}
         <DatasetExploreOptions persistentId={persistentId} />
       </DropdownButton>
       {shouldShowModal && showDownloadWithTermsAndGuestbookModal && (
