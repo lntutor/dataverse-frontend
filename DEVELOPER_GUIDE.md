@@ -211,8 +211,8 @@ As the script argument, add the name of the Dataverse image tag you want to depl
 ```bash
 # /dev-env/ directory
 
-# copy the .env.example file to .env
-# To test file upload, update the .env file with S3 credentials
+# Copy the .env.example file to .env.
+# File uploads use the LocalStack S3 service included in the development environment.
 $ cp .env.example .env
 
 # Install and run project off latest tagged container image from the develop branch
