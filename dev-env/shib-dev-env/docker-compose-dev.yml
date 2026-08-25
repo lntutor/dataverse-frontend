@@ -110,11 +110,15 @@ services:
       SERVICES: s3
       S3_BUCKET_NAME: dataverse
     healthcheck:
-      test: ['CMD-SHELL', 'awslocal s3api head-bucket --bucket "$$S3_BUCKET_NAME"']
+      test:
+        [
+          'CMD-SHELL',
+          'test -f /tmp/.s3-init-complete && awslocal s3api head-bucket --bucket "$$S3_BUCKET_NAME"'
+        ]
       interval: 5s
       timeout: 5s
-      retries: 20
-      start_period: 10s
+      retries: 30
+      start_period: 15s
     networks:
       dataverse:
         # Use the same hostname from browsers and containers so presigned URLs remain valid.
