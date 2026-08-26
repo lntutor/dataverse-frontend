@@ -9,10 +9,11 @@ import { TokenInfo } from '@/users/domain/models/TokenInfo'
 import { DateHelper } from '@/shared/helpers/DateHelper'
 import { Button } from '@iqss/dataverse-design-system'
 import { Alert } from '@iqss/dataverse-design-system'
+import { ExclamationTriangle } from 'react-bootstrap-icons'
 import { useUserRepositories } from '@/shared/contexts/repositories/RepositoriesProvider'
+import { useSession } from '@/sections/session/SessionContext'
 import accountStyles from '../Account.module.scss'
 import styles from './ApiTokenSection.module.scss'
-import { useSession } from '@/sections/session/SessionContext'
 
 export const ApiTokenSection = () => {
   const { userRepository } = useUserRepositories()
@@ -99,19 +100,22 @@ export const ApiTokenSection = () => {
       </p>
       {currentApiTokenInfo?.apiToken ? (
         <>
-          <p className={styles['exp-date']}>
-            {t('expirationDate')}{' '}
-            <time
-              data-testid="expiration-date"
-              dateTime={DateHelper.toISO8601Format(currentApiTokenInfo.expirationDate)}>
-              {DateHelper.toISO8601Format(currentApiTokenInfo.expirationDate)}
-            </time>
-          </p>
-          {isTokenExpired && (
-            <Alert variant="warning" dismissible={false}>
-              {t('expiredToken')}
-            </Alert>
-          )}
+          <div className={styles['expiration-row']}>
+            <p className={styles['exp-date']}>
+              {t('expirationDate')}{' '}
+              <time
+                data-testid="expiration-date"
+                dateTime={DateHelper.toISO8601Format(currentApiTokenInfo.expirationDate)}>
+                {DateHelper.toISO8601Format(currentApiTokenInfo.expirationDate)}
+              </time>
+            </p>
+            {isTokenExpired && (
+              <div className={styles['expired-warning']} role="alert">
+                <ExclamationTriangle aria-hidden="true" />
+                <span>{t('expiredToken')}</span>
+              </div>
+            )}
+          </div>
           <div className={styles['api-token']}>
             <code data-testid="api-token">{currentApiTokenInfo.apiToken}</code>
           </div>
