@@ -1,6 +1,4 @@
 import { useState } from 'react'
-import DOMPurify from 'dompurify'
-import parse from 'html-react-parser'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { Button, Modal, Spinner, Stack } from '@iqss/dataverse-design-system'
@@ -22,8 +20,10 @@ import { PublishLicense } from '@/sections/dataset/publish-dataset/PublishLicens
 import { CustomTerms } from '@/sections/dataset/dataset-terms/CustomTerms'
 import { useSettings } from '@/sections/settings/SettingsContext'
 import { SettingName } from '@/settings/domain/models/Setting'
-import styles from './PublishDatasetModal.module.scss'
 import { useCollectionRepositories } from '@/shared/contexts/repositories/RepositoriesProvider'
+import styles from './PublishDatasetModal.module.scss'
+import DOMPurify from 'dompurify'
+import parse from 'html-react-parser'
 
 interface PublishDatasetModalProps {
   show: boolean
